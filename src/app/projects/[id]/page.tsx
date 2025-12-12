@@ -8,6 +8,10 @@ import Link from "next/link";
 import { ProjectTasks } from "./ProjectTasks";
 import { Separator } from "@/components/ui/separator";
 import { ImportTasksDialog } from "./ImportTasksDialog";
+import { getAssetsByProjectId } from "@/lib/assets";
+import { AssetsTab } from "./assets/AssetsTab";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Database } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -25,8 +29,9 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
         notFound();
     }
 
-    // Fetch related tasks
+    // Fetch related tasks and assets
     const tasks = await getTasksByProjectId(id);
+    const assets = await getAssetsByProjectId(id);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -119,14 +124,26 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
                     <Separator />
 
                     <section className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-                                <Layers className="h-6 w-6" />
-                                Tasks
-                            </h2>
-                            <Badge variant="secondary">{tasks.length}</Badge>
-                        </div>
-                        <ProjectTasks tasks={tasks} projectId={project.id} projectName={project.name} />
+                        <Tabs defaultValue="tasks" className="w-full">
+                            <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="tasks" className="flex items-center gap-2">
+                                    <Layers className="h-4 w-4" />
+                                    Tasks
+                                    <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 min-w-[1.25rem]">{tasks.length}</Badge>
+                                </TabsTrigger>
+                                <TabsTrigger value="assets" className="flex items-center gap-2">
+                                    <Database className="h-4 w-4" />
+                                    Project Vault
+                                    <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 min-w-[1.25rem]">{assets.length}</Badge>
+                                </TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="tasks" className="mt-6 space-y-6">
+                                <ProjectTasks tasks={tasks} projectId={project.id} projectName={project.name} />
+                            </TabsContent>
+                            <TabsContent value="assets" className="mt-6">
+                                <AssetsTab assets={assets} projectId={project.id} />
+                            </TabsContent>
+                        </Tabs>
                     </section>
                 </div>
 
