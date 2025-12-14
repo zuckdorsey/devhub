@@ -25,9 +25,11 @@ import { TaskDialog } from "@/components/TaskDialog";
 import { deleteTaskAction } from "@/app/actions/tasks";
 import { useState } from "react";
 
+import { WorkflowStep } from "@/types";
+
 interface TaskTableViewProps {
     tasks: Task[];
-    projects: { id: string; name: string }[];
+    projects: { id: string; name: string; workflow?: WorkflowStep[] }[];
 }
 
 export function TaskTableView({ tasks, projects }: TaskTableViewProps) {
@@ -41,11 +43,21 @@ export function TaskTableView({ tasks, projects }: TaskTableViewProps) {
         }
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
+    const getStatusBadge = (task: Task) => {
+        const project = projects.find(p => p.id === task.project_id);
+        const workflow = project?.workflow;
+
+        if (workflow) {
+            const step = workflow.find(s => s.name === task.status);
+            if (step) {
+                return <Badge variant="outline" className={`border-${step.color}-500 text-${step.color}-500`}>{task.status}</Badge>;
+            }
+        }
+
+        switch (task.status) {
             case "Done": return <Badge variant="outline" className="border-green-500 text-green-500">Done</Badge>;
             case "In Progress": return <Badge variant="outline" className="border-blue-500 text-blue-500">In Progress</Badge>;
-            default: return <Badge variant="outline" className="text-muted-foreground">Todo</Badge>;
+            default: return <Badge variant="outline" className="text-muted-foreground">{task.status}</Badge>;
         }
     };
 
@@ -82,7 +94,7 @@ export function TaskTableView({ tasks, projects }: TaskTableViewProps) {
                                         )}
                                     </div>
                                 </TableCell>
-                                <TableCell>{getStatusBadge(task.status)}</TableCell>
+                                <TableCell>{getStatusBadge(task)}</TableCell>
                                 <TableCell>
                                     <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 font-medium border ${getPriorityColor(task.priority)}`}>
                                         {task.priority}
@@ -118,7 +130,7 @@ export function TaskTableView({ tasks, projects }: TaskTableViewProps) {
     );
 }
 
-function TaskActions({ task, projects }: { task: Task; projects: { id: string; name: string }[] }) {
+function TaskActions({ task, projects }: { task: Task; projects: { id: string; name: string; workflow?: WorkflowStep[] }[] }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     return (

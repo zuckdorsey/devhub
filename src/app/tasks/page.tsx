@@ -8,7 +8,11 @@ export default async function TasksPage() {
     const tasks = await getTasks();
 
     // Fetch projects for the dropdown
-    const projects = await sql`SELECT id, name FROM projects ORDER BY name ASC`;
+    const projects = await sql`SELECT id, name, workflow FROM projects ORDER BY name ASC`;
 
-    return <TasksClient initialTasks={tasks} projects={projects as any} />;
+    // Fetch all sections
+    const { getAllSections } = await import("@/lib/sections");
+    const sections = await getAllSections();
+
+    return <TasksClient initialTasks={tasks} projects={projects as any} sections={sections} />;
 }

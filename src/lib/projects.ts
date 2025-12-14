@@ -10,7 +10,7 @@ export async function getProjects(): Promise<Project[]> {
     return projects as Project[];
   } catch (error) {
     console.error("Error fetching projects:", error);
-    throw error;
+    return [];
   }
 }
 
@@ -23,7 +23,7 @@ export async function getProjectById(id: string): Promise<Project | null> {
     return project as Project || null;
   } catch (error) {
     console.error("Error fetching project:", error);
-    throw error;
+    return null;
   }
 }
 
@@ -46,7 +46,7 @@ export async function createProject(data: {
       INSERT INTO projects (
         name, status, tech_stack, description, created_at,
         api_endpoint, github_repo, priority, progress,
-        related_issues, related_tasks, tags, timeline
+        related_issues, related_tasks, tags, timeline, workflow
       )
       VALUES (
         ${data.name},
@@ -61,7 +61,13 @@ export async function createProject(data: {
         ${data.related_issues || []},
         ${data.related_tasks || []},
         ${data.tags || []},
-        ${data.timeline || null}
+        ${data.timeline || null},
+        ${JSON.stringify([
+      { id: "backlog", name: "Backlog", color: "gray", type: "backlog" },
+      { id: "in-progress", name: "In Progress", color: "blue", type: "started" },
+      { id: "review", name: "Review", color: "purple", type: "started" },
+      { id: "done", name: "Done", color: "green", type: "completed" }
+    ])}
       )
       RETURNING *
     `;
@@ -87,6 +93,7 @@ export async function updateProject(
     related_tasks?: string[];
     tags?: string[];
     timeline?: string;
+    vercel_project_id?: string;
   }
 ): Promise<Project> {
   try {
@@ -104,7 +111,8 @@ export async function updateProject(
         related_issues = COALESCE(${data.related_issues || null}, related_issues),
         related_tasks = COALESCE(${data.related_tasks || null}, related_tasks),
         tags = COALESCE(${data.tags || null}, tags),
-        timeline = COALESCE(${data.timeline || null}, timeline)
+        timeline = COALESCE(${data.timeline || null}, timeline),
+        vercel_project_id = COALESCE(${data.vercel_project_id || null}, vercel_project_id)
       WHERE id = ${id}
       RETURNING *
     `;

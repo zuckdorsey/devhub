@@ -1,4 +1,4 @@
-import { fetchRepositories } from "@/lib/github";
+import { fetchRepositories, GitHubRepo } from "@/lib/github";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { importProjectAction } from "@/app/actions/github";
@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 export const dynamic = "force-dynamic";
 
 export default async function ImportProjectPage() {
-    let repos = [];
+    let repos: GitHubRepo[] = [];
     let error = null;
 
     try {

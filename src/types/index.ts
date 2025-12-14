@@ -1,3 +1,10 @@
+export interface WorkflowStep {
+  id: string;
+  name: string;
+  color: string;
+  type: "backlog" | "unstarted" | "started" | "completed" | "canceled";
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -13,6 +20,8 @@ export interface Project {
   related_tasks?: string[];
   tags?: string[];
   timeline?: string;
+  vercel_project_id?: string;
+  workflow?: WorkflowStep[];
 }
 
 export interface Stats {

@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
-import { Toaster } from "sonner";
+import { LayoutWrapper } from "@/components/layout-wrapper";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,6 +20,8 @@ export const metadata: Metadata = {
 };
 
 import { getProjects } from "@/lib/projects";
+import { auth } from "@/auth";
+import { getSetting } from "@/lib/settings";
 
 export default async function RootLayout({
   children,
@@ -31,29 +31,32 @@ export default async function RootLayout({
   const projects = await getProjects();
   const recentProjects = projects.slice(0, 5).map(p => ({ id: p.id, name: p.name }));
 
+  const session = await auth();
+  const userName = await getSetting("user_name") || session?.user?.name || "Admin";
+  const userAvatar = await getSetting("user_avatar") || session?.user?.image || "";
+  const userEmail = session?.user?.email || "admin@example.com";
+
+  const user = {
+    name: userName,
+    email: userEmail,
+    avatar: userAvatar,
+  };
+
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SidebarProvider>
-          <AppSidebar projects={recentProjects} />
-          <SidebarInset>
-            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 h-4" />
-              <div className="flex flex-1 items-center justify-between">
-                <h1 className="text-lg font-semibold">Dashboard</h1>
-              </div>
-            </header>
-            <main className="flex flex-1 flex-col gap-4 p-4 pt-0">
-              <div className="min-h-[100vh] flex-1 rounded-xl md:min-h-min mt-4">
-                {children}
-              </div>
-            </main>
-          </SidebarInset>
-        </SidebarProvider>
-        <Toaster />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <LayoutWrapper projects={recentProjects} user={user}>
+            {children}
+          </LayoutWrapper>
+        </ThemeProvider>
       </body>
     </html>
   );

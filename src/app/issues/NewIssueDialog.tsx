@@ -24,11 +24,7 @@ import {
 import { createIssueAction } from "@/app/actions/github";
 import { Loader2, Plus } from "lucide-react";
 
-interface Project {
-    id: string;
-    name: string;
-    github_repo: string | null;
-}
+import { Project } from "@/types/index";
 
 interface NewIssueDialogProps {
     projects: Project[];

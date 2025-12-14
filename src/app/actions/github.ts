@@ -1,7 +1,7 @@
 "use server";
 
 import { createProject } from "@/lib/projects";
-import { fetchRepositories, fetchIssuesAndPRs, createIssue } from "@/lib/github";
+import { fetchIssuesAndPRs, createIssue } from "@/lib/github";
 import { createTask as createProjectTask } from "@/lib/tasks";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -45,7 +45,7 @@ export async function importTasksFromGitHubAction(projectId: string, issuesJson:
             priority: "Medium", // Default priority
             project_id: projectId,
             github_issue_number: issue.number,
-            due_date: null,
+            due_date: undefined,
         });
     }
 

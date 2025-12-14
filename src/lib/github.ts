@@ -1,106 +1,182 @@
-import { getSetting } from "./settings";
-
 const GITHUB_API_BASE = "https://api.github.com";
 
-interface GitHubRepo {
+export interface GitHubRepo {
     id: number;
     name: string;
     full_name: string;
-    description: string | null;
+    description: string;
     html_url: string;
-    language: string | null;
-    topics: string[];
+    stargazers_count: number;
+    forks_count: number;
+    watchers_count: number;
+    language: string;
+    open_issues_count: number;
+    default_branch: string;
+    updated_at: string;
 }
 
-interface GitHubIssue {
+export interface GitHubCommit {
+    sha: string;
+    commit: {
+        message: string;
+        author: {
+            name: string;
+            date: string;
+        };
+    };
+    author: {
+        login: string;
+        avatar_url: string;
+        html_url: string;
+    } | null;
+    html_url: string;
+}
+
+export interface GitHubContributor {
+    id: number;
+    login: string;
+    avatar_url: string;
+    html_url: string;
+    contributions: number;
+}
+
+export interface GitHubWorkflowRun {
+    id: number;
+    name: string;
+    status: string;
+    conclusion: string | null;
+    html_url: string;
+    created_at: string;
+    updated_at: string;
+    actor: {
+        login: string;
+        avatar_url: string;
+    };
+}
+
+export interface GitHubIssue {
     id: number;
     number: number;
     title: string;
-    body: string | null;
-    state: string;
+    state: "open" | "closed";
     html_url: string;
-    pull_request?: object;
+    created_at: string;
+    user: {
+        login: string;
+        avatar_url: string;
+    };
+    pull_request?: {
+        url: string;
+    };
 }
 
-export async function getGitHubToken(): Promise<string | null> {
-    return await getSetting("github_token");
-}
+async function fetchGitHub<T>(path: string, options?: RequestInit): Promise<T | null> {
+    const token = process.env.GITHUB_TOKEN;
+    const headers: HeadersInit = {
+        "Accept": "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+    };
 
-async function fetchGitHub(endpoint: string, token: string) {
-    const response = await fetch(`${GITHUB_API_BASE}${endpoint}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/vnd.github.v3+json",
-        },
-    });
-
-    if (!response.ok) {
-        throw new Error(`GitHub API error: ${response.statusText}`);
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
     }
 
-    return await response.json();
+    try {
+        const response = await fetch(`${GITHUB_API_BASE}${path}`, {
+            ...options,
+            headers: {
+                ...headers,
+                ...options?.headers,
+            },
+            next: { revalidate: options?.method === 'POST' ? 0 : 60 }, // Don't cache POST requests
+        });
+
+        if (!response.ok) {
+            if (response.status === 404) return null;
+            console.error(`GitHub API error: ${response.status} ${response.statusText} for ${path}`);
+            return null;
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching from GitHub:", error);
+        return null;
+    }
 }
 
-export async function fetchRepositories(): Promise<GitHubRepo[]> {
-    const token = await getGitHubToken();
-    if (!token) {
-        throw new Error("GitHub token not found");
+function parseRepoUrl(url: string): { owner: string; repo: string } | null {
+    try {
+        const parsed = new URL(url);
+        const parts = parsed.pathname.split("/").filter(Boolean);
+        if (parts.length >= 2) {
+            return { owner: parts[0], repo: parts[1] };
+        }
+    } catch (e) {
+        // Invalid URL
     }
+    return null;
+}
 
-    // Fetch user's repos (including private ones if scope allows)
-    // sort by updated to show recent ones first
-    return await fetchGitHub("/user/repos?sort=updated&per_page=100", token);
+export async function getRepoDetails(repoUrl: string): Promise<GitHubRepo | null> {
+    const repoInfo = parseRepoUrl(repoUrl);
+    if (!repoInfo) return null;
+    return fetchGitHub<GitHubRepo>(`/repos/${repoInfo.owner}/${repoInfo.repo}`);
+}
+
+export async function getCommits(repoUrl: string, limit = 5): Promise<GitHubCommit[]> {
+    const repoInfo = parseRepoUrl(repoUrl);
+    if (!repoInfo) return [];
+    const commits = await fetchGitHub<GitHubCommit[]>(`/repos/${repoInfo.owner}/${repoInfo.repo}/commits?per_page=${limit}`);
+    return commits || [];
+}
+
+export async function getContributors(repoUrl: string, limit = 10): Promise<GitHubContributor[]> {
+    const repoInfo = parseRepoUrl(repoUrl);
+    if (!repoInfo) return [];
+    const contributors = await fetchGitHub<GitHubContributor[]>(`/repos/${repoInfo.owner}/${repoInfo.repo}/contributors?per_page=${limit}`);
+    return contributors || [];
+}
+
+export async function getLanguages(repoUrl: string): Promise<Record<string, number> | null> {
+    const repoInfo = parseRepoUrl(repoUrl);
+    if (!repoInfo) return null;
+    return fetchGitHub<Record<string, number>>(`/repos/${repoInfo.owner}/${repoInfo.repo}/languages`);
+}
+
+export async function getWorkflowRuns(repoUrl: string, limit = 5): Promise<GitHubWorkflowRun[]> {
+    const repoInfo = parseRepoUrl(repoUrl);
+    if (!repoInfo) return [];
+    const response = await fetchGitHub<{ workflow_runs: GitHubWorkflowRun[] }>(`/repos/${repoInfo.owner}/${repoInfo.repo}/actions/runs?per_page=${limit}`);
+    return response?.workflow_runs || [];
+}
+
+export async function getIssuesAndPRs(repoUrl: string, limit = 5): Promise<GitHubIssue[]> {
+    const repoInfo = parseRepoUrl(repoUrl);
+    if (!repoInfo) return [];
+    const issues = await fetchGitHub<GitHubIssue[]>(`/repos/${repoInfo.owner}/${repoInfo.repo}/issues?per_page=${limit}&sort=updated&direction=desc`);
+    return issues || [];
 }
 
 export async function fetchIssuesAndPRs(owner: string, repo: string): Promise<GitHubIssue[]> {
-    const token = await getGitHubToken();
-    if (!token) {
-        throw new Error("GitHub token not found");
-    }
-
-    return await fetchGitHub(`/repos/${owner}/${repo}/issues?state=open&per_page=50`, token);
+    const issues = await fetchGitHub<GitHubIssue[]>(`/repos/${owner}/${repo}/issues?sort=updated&direction=desc`);
+    return issues || [];
 }
 
-export async function createIssue(owner: string, repo: string, title: string, body: string): Promise<GitHubIssue> {
-    const token = await getGitHubToken();
-    if (!token) {
-        throw new Error("GitHub token not found");
-    }
-
-    const response = await fetch(`${GITHUB_API_BASE}/repos/${owner}/${repo}/issues`, {
+export async function createIssue(owner: string, repo: string, title: string, body: string): Promise<GitHubIssue | null> {
+    return fetchGitHub<GitHubIssue>(`/repos/${owner}/${repo}/issues`, {
         method: "POST",
-        headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/vnd.github.v3+json",
-            "Content-Type": "application/json",
-        },
         body: JSON.stringify({ title, body }),
     });
-
-    if (!response.ok) {
-        throw new Error(`GitHub API error: ${response.statusText}`);
-    }
-
-    return await response.json();
 }
 
-export async function closeIssue(owner: string, repo: string, issueNumber: number): Promise<void> {
-    const token = await getGitHubToken();
-    if (!token) {
-        throw new Error("GitHub token not found");
-    }
+export async function fetchRepositories(): Promise<GitHubRepo[]> {
+    const repos = await fetchGitHub<GitHubRepo[]>("/user/repos?sort=updated&direction=desc&per_page=100");
+    return repos || [];
+}
 
-    const response = await fetch(`${GITHUB_API_BASE}/repos/${owner}/${repo}/issues/${issueNumber}`, {
+export async function closeIssue(owner: string, repo: string, issueNumber: number): Promise<GitHubIssue | null> {
+    return fetchGitHub<GitHubIssue>(`/repos/${owner}/${repo}/issues/${issueNumber}`, {
         method: "PATCH",
-        headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/vnd.github.v3+json",
-            "Content-Type": "application/json",
-        },
         body: JSON.stringify({ state: "closed" }),
     });
-
-    if (!response.ok) {
-        throw new Error(`GitHub API error: ${response.statusText}`);
-    }
 }

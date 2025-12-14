@@ -14,7 +14,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Plus, Filter, Layers, Search } from "lucide-react";
+import { Plus, Filter, Search, CheckCircle2, Clock, AlertCircle, ListTodo } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -24,13 +24,19 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TaskDialog } from "@/components/TaskDialog";
+import { Badge } from "@/components/ui/badge";
+
+import { Section } from "@/lib/sections";
+
+import { WorkflowStep } from "@/types";
 
 interface TasksClientProps {
     initialTasks: Task[];
-    projects: { id: string; name: string }[];
+    projects: { id: string; name: string; workflow?: WorkflowStep[] }[];
+    sections: Section[];
 }
 
-export function TasksClient({ initialTasks, projects }: TasksClientProps) {
+export function TasksClient({ initialTasks, projects, sections }: TasksClientProps) {
     const [view, setView] = useState<"board" | "table">("board");
     const [filterType, setFilterType] = useState<"all" | "Daily" | "Weekly">("all");
     const [searchQuery, setSearchQuery] = useState("");
@@ -38,13 +44,8 @@ export function TasksClient({ initialTasks, projects }: TasksClientProps) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const filteredTasks = initialTasks.filter((task) => {
-        // Filter by Type
         if (filterType !== "all" && task.type !== filterType) return false;
-
-        // Filter by Project
         if (selectedProject !== "all" && task.project_id !== selectedProject) return false;
-
-        // Filter by Search Query
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             return (
@@ -53,44 +54,101 @@ export function TasksClient({ initialTasks, projects }: TasksClientProps) {
                 (task.project_name && task.project_name.toLowerCase().includes(query))
             );
         }
-
         return true;
     });
 
+    // Calculate stats
+    // Calculate stats
+    const todoCount = initialTasks.filter(t => {
+        const project = projects.find(p => p.id === t.project_id);
+        const workflow = project?.workflow;
+        if (workflow) {
+            const step = workflow.find(s => s.name === t.status);
+            return step?.type === "backlog" || step?.type === "unstarted";
+        }
+        return t.status === "Todo" || t.status === "Backlog";
+    }).length;
+
+    const inProgressCount = initialTasks.filter(t => {
+        const project = projects.find(p => p.id === t.project_id);
+        const workflow = project?.workflow;
+        if (workflow) {
+            const step = workflow.find(s => s.name === t.status);
+            return step?.type === "started";
+        }
+        return t.status === "In Progress" || t.status === "Review";
+    }).length;
+
+    const doneCount = initialTasks.filter(t => {
+        const project = projects.find(p => p.id === t.project_id);
+        const workflow = project?.workflow;
+        if (workflow) {
+            const step = workflow.find(s => s.name === t.status);
+            return step?.type === "completed" || step?.type === "canceled";
+        }
+        return t.status === "Done";
+    }).length;
+
+    const totalCount = initialTasks.length;
+
+    const stats = [
+        { label: "Total", value: totalCount, icon: ListTodo, color: "bg-primary/10 text-primary" },
+        { label: "To Do", value: todoCount, icon: AlertCircle, color: "bg-orange-500/10 text-orange-500" },
+        { label: "In Progress", value: inProgressCount, icon: Clock, color: "bg-blue-500/10 text-blue-500" },
+        { label: "Done", value: doneCount, icon: CheckCircle2, color: "bg-green-500/10 text-green-500" },
+    ];
+
     return (
-        <div className="container mx-auto py-10 px-4 md:px-6 space-y-8 h-[calc(100vh-4rem)] flex flex-col">
+        <div className="container mx-auto py-10 px-4 md:px-6 space-y-6 h-[calc(100vh-4rem)] flex flex-col">
+            {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6 shrink-0">
                 <div className="space-y-1">
-                    <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-                        <Layers className="h-8 w-8" />
+                    <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
                         Tasks
                     </h1>
                     <p className="text-muted-foreground text-lg">
                         Manage your daily and weekly tasks efficiently.
                     </p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Button size="sm" className="h-9" onClick={() => setIsDialogOpen(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Task
-                    </Button>
-                </div>
+                <Button onClick={() => setIsDialogOpen(true)} className="gap-2 shadow-lg shadow-primary/20">
+                    <Plus className="h-4 w-4" />
+                    Add Task
+                </Button>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between shrink-0">
-                <div className="flex flex-1 items-center gap-4 w-full">
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 shrink-0">
+                {stats.map((stat) => (
+                    <div
+                        key={stat.label}
+                        className="flex items-center gap-3 p-3 rounded-xl border bg-gradient-to-br from-card to-card/50"
+                    >
+                        <div className={`p-2 rounded-lg ${stat.color}`}>
+                            <stat.icon className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <p className="text-xl font-bold">{stat.value}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{stat.label}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between shrink-0">
+                <div className="flex flex-1 items-center gap-3 w-full">
                     <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Search tasks..."
-                            className="pl-8 h-9"
+                            className="pl-9 h-10 bg-muted/30 border-muted focus:border-primary"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
 
                     <Select value={selectedProject} onValueChange={setSelectedProject}>
-                        <SelectTrigger className="w-[180px] h-9">
+                        <SelectTrigger className="w-[180px] h-10 bg-muted/30 border-muted">
                             <SelectValue placeholder="Project" />
                         </SelectTrigger>
                         <SelectContent>
@@ -105,12 +163,17 @@ export function TasksClient({ initialTasks, projects }: TasksClientProps) {
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9 gap-2 border-dashed">
-                                <Filter className="h-3.5 w-3.5" />
+                            <Button variant="outline" className="h-10 gap-2 bg-muted/30 border-muted hover:border-primary/50">
+                                <Filter className="h-4 w-4" />
                                 {filterType === 'all' ? 'All Types' : filterType}
+                                {filterType !== 'all' && (
+                                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                                        1
+                                    </Badge>
+                                )}
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
+                        <DropdownMenuContent align="start" className="w-40">
                             <DropdownMenuLabel>Filter by Type</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuCheckboxItem
@@ -138,6 +201,7 @@ export function TasksClient({ initialTasks, projects }: TasksClientProps) {
                 <ViewSwitcher view={view} onViewChange={setView} />
             </div>
 
+            {/* Task Views */}
             <div className="flex-1 min-h-0">
                 {view === "board" ? (
                     <TaskBoardView tasks={filteredTasks} projects={projects} />
@@ -150,6 +214,7 @@ export function TasksClient({ initialTasks, projects }: TasksClientProps) {
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
                 projects={projects}
+                sections={sections}
             />
         </div>
     );

@@ -1,70 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DevHub
+
+DevHub is a comprehensive developer dashboard designed to streamline your workflow. It integrates project management, issue tracking, note-taking, and asset management into a single, cohesive interface. Built with modern web technologies, DevHub provides a premium user experience with a focus on productivity and aesthetics.
+
+![DevHub Banner](/public/banner.png)
+
+## Features
+
+- **📂 Project Management**: Organize your projects with ease. Track status, tech stack, and priority.
+- **✅ Task Management**: Kanban-style task boards to manage your daily to-dos and project-specific tasks.
+- **octocat: GitHub Integration**: Seamlessly import projects from GitHub, view issues, and track pull requests directly from the dashboard.
+- **📝 Knowledge Base**: A rich-text note-taking system with Markdown support to document your ideas and snippets.
+- **📦 Asset Management**: Store and organize project assets. Includes Google Drive integration for file storage.
+- **🔐 Secure Authentication**: PIN-based authentication system to keep your dashboard private.
+- **🎨 Modern UI/UX**: A beautiful, dark-themed interface built with Tailwind CSS and Radix UI.
+
+## Tech Stack
+
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Database**: [Neon](https://neon.tech/) (Serverless PostgreSQL)
+- **Authentication**: [NextAuth.js](https://authjs.dev/) (v5)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Charts**: [Recharts](https://recharts.org/)
 
 ## Getting Started
 
-First, run the development server:
+Follow these steps to set up DevHub locally on your machine.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Prerequisites
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Node.js 18+ installed
+- A [Neon](https://neon.tech) account for the database
+- A GitHub account (for GitHub integration features)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Installation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Clone the repository:**
 
-## Learn More
+   ```bash
+   git clone https://github.com/yourusername/devhub.git
+   cd devhub
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. **Install dependencies:**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```bash
+   npm install
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. **Set up Environment Variables:**
 
-## Deploy on Vercel
+   Create a `.env` file in the root directory and add the following variables:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   ```env
+   # Database (Neon)
+   DATABASE_URL="postgresql://user:password@ep-xxx.region.aws.neon.tech/neondb?sslmode=require"
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   # Authentication (NextAuth)
+   AUTH_SECRET="your-random-secret-key" # Generate one with `openssl rand -base64 32`
 
-## Neon Database Setup
+   # GitHub Integration (Optional but recommended)
+   GITHUB_TOKEN="your-github-personal-access-token"
+   ```
 
-This project uses [Neon](https://neon.tech) as the serverless PostgreSQL database.
+4. **Initialize the Database:**
 
-### Setup Instructions
+   Run the seed script to create the necessary tables and insert initial data:
 
-1. Create a new project on [Neon](https://neon.tech).
-2. Copy your **Connection String** from the Neon Dashboard.
-3. Add it to your `.env` file:
+   ```bash
+   npx tsx src/scripts/seed.ts
+   ```
 
-```env
-DATABASE_URL="postgresql://user:password@ep-xxx.region.aws.neon.tech/neondb?sslmode=require"
-```
+5. **Run the Development Server:**
 
-4. Run the seed script to create the table and insert mock data:
+   ```bash
+   npm run dev
+   ```
 
-```bash
-npx tsx src/scripts/seed.ts
-```
+   Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-This script will:
+## Scripts
 
-1. Connect to your Neon database using `DATABASE_URL`.
-2. Execute `neon/schema.sql` to create the `projects` table and indexes (if they don't exist).
-3. Insert the mock data from `src/data/mockData.ts`.
-4. Verify the insertion by counting the total projects.
+- `npm run dev`: Starts the development server.
+- `npm run build`: Builds the application for production.
+- `npm start`: Starts the production server.
+- `npm run lint`: Runs ESLint to check for code quality issues.
 
-### Why Neon?
+## Contributing
 
-- **Serverless**: Automatically scales to zero when not in use, saving costs.
-- **Instant branching**: Create database branches for development and testing.
-- **Fast**: Built on PostgreSQL with modern cloud architecture.
-- **Developer-friendly**: Works seamlessly with Next.js and serverless environments.
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

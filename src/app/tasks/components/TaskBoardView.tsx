@@ -7,9 +7,11 @@ import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea
 import { useState, useEffect } from "react";
 import { updateTaskAction } from "@/app/actions/tasks";
 
+import { WorkflowStep } from "@/types";
+
 interface TaskBoardViewProps {
     tasks: Task[];
-    projects: { id: string; name: string }[];
+    projects: { id: string; name: string; workflow?: WorkflowStep[] }[];
 }
 
 export function TaskBoardView({ tasks, projects }: TaskBoardViewProps) {
@@ -32,16 +34,43 @@ export function TaskBoardView({ tasks, projects }: TaskBoardViewProps) {
             return;
         }
 
-        const newStatus = destination.droppableId as "Todo" | "In Progress" | "Done";
+        const columnId = destination.droppableId;
+        let newStatus = columnId; // Default fallback
+
+        // Find the task and its project to determine the correct status string
+        const task = tasks.find(t => t.id === draggableId);
+        if (task) {
+            const project = projects.find(p => p.id === task.project_id);
+            const workflow = project?.workflow;
+
+            if (workflow) {
+                let targetStep;
+                if (columnId === "Todo") {
+                    targetStep = workflow.find(s => s.type === "unstarted") || workflow.find(s => s.type === "backlog");
+                } else if (columnId === "In Progress") {
+                    targetStep = workflow.find(s => s.type === "started");
+                } else if (columnId === "Done") {
+                    targetStep = workflow.find(s => s.type === "completed");
+                }
+
+                if (targetStep) {
+                    newStatus = targetStep.name;
+                }
+            } else {
+                // Fallback mapping if no workflow
+                if (columnId === "Todo") newStatus = "Todo";
+                else if (columnId === "In Progress") newStatus = "In Progress";
+                else if (columnId === "Done") newStatus = "Done";
+            }
+        }
 
         // Optimistic update
-        const updatedTasks = optimisticTasks.map(task =>
-            task.id === draggableId ? { ...task, status: newStatus } : task
+        const updatedTasks = optimisticTasks.map(t =>
+            t.id === draggableId ? { ...t, status: newStatus } : t
         );
         setOptimisticTasks(updatedTasks);
 
         // Server action
-        const task = tasks.find(t => t.id === draggableId);
         if (task) {
             const formData = new FormData();
             formData.append("status", newStatus);
@@ -57,7 +86,28 @@ export function TaskBoardView({ tasks, projects }: TaskBoardViewProps) {
         }
     };
 
-    const getTasksByStatus = (status: string) => optimisticTasks.filter((t) => t.status === status);
+    const getTasksByStatus = (columnId: string) => {
+        return optimisticTasks.filter((task) => {
+            const project = projects.find(p => p.id === task.project_id);
+            const workflow = project?.workflow;
+
+            if (workflow) {
+                const step = workflow.find(s => s.name === task.status);
+                if (step) {
+                    if (columnId === "Todo") return step.type === "backlog" || step.type === "unstarted";
+                    if (columnId === "In Progress") return step.type === "started";
+                    if (columnId === "Done") return step.type === "completed" || step.type === "canceled";
+                }
+            }
+
+            // Fallback for legacy or missing workflow
+            if (columnId === "Todo") return task.status === "Todo" || task.status === "Backlog";
+            if (columnId === "In Progress") return task.status === "In Progress" || task.status === "Review";
+            if (columnId === "Done") return task.status === "Done";
+
+            return false;
+        });
+    };
 
     const columns = [
         { id: "Todo", title: "To Do", bg: "bg-muted/30", border: "border-muted", text: "text-muted-foreground", badgeBg: "bg-muted", badgeText: "text-muted-foreground" },
@@ -94,7 +144,11 @@ export function TaskBoardView({ tasks, projects }: TaskBoardViewProps) {
                                                             {...provided.draggableProps}
                                                             {...provided.dragHandleProps}
                                                         >
-                                                            <TaskCard task={task} projects={projects} />
+                                                            <TaskCard
+                                                                task={task}
+                                                                projects={projects}
+                                                                workflow={projects.find(p => p.id === task.project_id)?.workflow}
+                                                            />
                                                         </div>
                                                     )}
                                                 </Draggable>

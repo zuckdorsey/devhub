@@ -52,3 +52,31 @@ export async function saveGitHubToken(formData: FormData) {
     await saveSetting("github_token", token);
     revalidatePath("/settings");
 }
+
+export async function saveVercelToken(formData: FormData) {
+    const token = formData.get("token") as string;
+    if (!token) throw new Error("Token is required");
+
+    await saveSetting("vercel_token", token);
+    revalidatePath("/settings");
+}
+
+export async function saveWhatsAppSettings(formData: FormData) {
+    const token = formData.get("whatsapp_token") as string;
+    const target = formData.get("whatsapp_target") as string;
+
+    if (!token) throw new Error("Token is required");
+    if (!target) throw new Error("Target number is required");
+
+    await saveSetting("whatsapp_token", token);
+    await saveSetting("whatsapp_target", target);
+    revalidatePath("/settings");
+}
+
+export async function saveSettingAction(key: string, value: string) {
+    if (!key) throw new Error("Key is required");
+    if (!value) throw new Error("Value is required");
+
+    await saveSetting(key, value);
+    revalidatePath("/settings");
+}

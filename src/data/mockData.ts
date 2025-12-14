@@ -9,7 +9,7 @@ export const projects: Project[] = [
   {
     id: '1',
     name: 'Personal Portfolio',
-    status: 'Active',
+    status: 'In Progress',
     tech_stack: ['Next.js', 'TypeScript', 'Tailwind'],
     description: 'My personal portfolio website showcasing my work.',
   },
@@ -30,7 +30,7 @@ export const projects: Project[] = [
   {
     id: '4',
     name: 'Task Manager CLI',
-    status: 'Active',
+    status: 'In Progress',
     tech_stack: ['Go', 'Cobra'],
     description: 'Command line tool for managing daily tasks.',
   },
@@ -45,7 +45,7 @@ export const projects: Project[] = [
 
 export const stats: Stats = {
   totalProjects: projects.length,
-  activeProjects: projects.filter((p) => p.status === 'Active').length,
+  activeProjects: projects.filter((p) => p.status === 'In Progress').length,
   completedProjects: projects.filter((p) => p.status === 'Done').length,
   ideaProjects: projects.filter((p) => p.status === 'Idea').length,
 };
