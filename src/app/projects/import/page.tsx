@@ -2,14 +2,19 @@ import { fetchRepositories, GitHubRepo } from "@/lib/github";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { importProjectAction } from "@/app/actions/github";
-import { Github, GitFork, Star, ArrowLeft } from "lucide-react";
+import { Github, GitFork, Star, ArrowLeft, Search } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
 
 export const dynamic = "force-dynamic";
 
-export default async function ImportProjectPage() {
+export default async function ImportProjectPage({
+    searchParams,
+}: {
+    searchParams?: { q?: string };
+}) {
     let repos: GitHubRepo[] = [];
     let error = null;
 
@@ -18,6 +23,20 @@ export default async function ImportProjectPage() {
     } catch (e) {
         error = "Failed to fetch repositories. Please check your GitHub token in Settings.";
     }
+
+    const query = searchParams?.q?.toLowerCase().trim() || "";
+    const filteredRepos = query
+        ? repos.filter((repo) => {
+              const name = repo.name?.toLowerCase() || "";
+              const fullName = repo.full_name?.toLowerCase() || "";
+              const desc = repo.description?.toLowerCase() || "";
+              return (
+                  name.includes(query) ||
+                  fullName.includes(query) ||
+                  desc.includes(query)
+              );
+          })
+        : repos;
 
     return (
         <div className="container mx-auto py-10 px-4 md:px-6 max-w-4xl">
@@ -29,7 +48,7 @@ export default async function ImportProjectPage() {
                     </Link>
                 </Button>
                 <h1 className="text-3xl font-bold tracking-tight">Import from GitHub</h1>
-                <p className="text-muted-foreground mt-2">Select a repository to import as a new project.</p>
+                <p className="text-muted-foreground mt-2">Search and select a repository to import as a new project.</p>
             </div>
 
             {error ? (
@@ -37,9 +56,43 @@ export default async function ImportProjectPage() {
                     {error} <Link href="/settings" className="underline font-medium">Go to Settings</Link>
                 </div>
             ) : (
-                <ScrollArea className="h-[600px] pr-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {repos.map((repo) => (
+                <>
+                    <form
+                        className="mb-4 flex items-center gap-2 max-w-md"
+                        action="/projects/import"
+                        method="GET"
+                    >
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                name="q"
+                                placeholder="Search repositories by name or description..."
+                                defaultValue={searchParams?.q || ""}
+                                className="pl-9"
+                            />
+                        </div>
+                        <Button type="submit" variant="outline">
+                            Search
+                        </Button>
+                        {query && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                asChild
+                            >
+                                <Link href="/projects/import">Clear</Link>
+                            </Button>
+                        )}
+                    </form>
+
+                    <ScrollArea className="h-[540px] pr-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {filteredRepos.length === 0 ? (
+                                <p className="text-sm text-muted-foreground col-span-2">
+                                    No repositories found for "{query}".
+                                </p>
+                            ) : (
+                                filteredRepos.map((repo) => (
                             <Card key={repo.id} className="flex flex-col">
                                 <CardHeader>
                                     <CardTitle className="text-lg flex items-center gap-2 truncate">
@@ -70,9 +123,11 @@ export default async function ImportProjectPage() {
                                     </form>
                                 </CardFooter>
                             </Card>
-                        ))}
-                    </div>
-                </ScrollArea>
+                                ))
+                            )}
+                        </div>
+                    </ScrollArea>
+                </>
             )}
         </div>
     );

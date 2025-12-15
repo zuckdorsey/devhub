@@ -71,10 +71,26 @@ export interface GitHubIssue {
 }
 
 async function fetchGitHub<T>(path: string, options?: RequestInit): Promise<T | null> {
-    const token = process.env.GITHUB_TOKEN;
+    let token = process.env.GITHUB_TOKEN;
+
+    // Fallback to token stored in settings if env is not set
+    if (!token) {
+        try {
+            const { getSetting } = await import("@/lib/settings");
+            const storedToken = await getSetting("github_token");
+            if (storedToken) {
+                token = storedToken;
+            }
+        } catch (error) {
+            console.error("Failed to load GitHub token from settings:", error);
+        }
+    }
+
     const headers: HeadersInit = {
-        "Accept": "application/vnd.github.v3+json",
+        "Accept": "application/vnd.github+json",
         "Content-Type": "application/json",
+        "User-Agent": "DevHub",
+        "X-GitHub-Api-Version": "2022-11-28",
     };
 
     if (token) {

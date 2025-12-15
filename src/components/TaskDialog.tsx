@@ -149,16 +149,15 @@ export function TaskDialog({ open, onOpenChange, task, projects, sections = [], 
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="type">Type</Label>
-                                <Select name="type" defaultValue={task?.type || "Daily"}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Daily">Daily</SelectItem>
-                                        <SelectItem value="Weekly">Weekly</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <Label htmlFor="start_time">Start Time</Label>
+                                <Input
+                                    id="start_time"
+                                    name="start_time"
+                                    type="datetime-local"
+                                    defaultValue={task?.start_time
+                                        ? new Date(task.start_time).toISOString().slice(0, 16)
+                                        : ""}
+                                />
                             </div>
                         </div>
 
@@ -211,12 +210,14 @@ export function TaskDialog({ open, onOpenChange, task, projects, sections = [], 
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="due_date">Due Date</Label>
+                            <Label htmlFor="due_date">Deadline</Label>
                             <Input
                                 id="due_date"
                                 name="due_date"
-                                type="date"
-                                defaultValue={task?.due_date ? new Date(task.due_date).toISOString().split('T')[0] : ""}
+                                type="datetime-local"
+                                defaultValue={task?.due_date
+                                    ? new Date(task.due_date).toISOString().slice(0, 16)
+                                    : ""}
                             />
                         </div>
 

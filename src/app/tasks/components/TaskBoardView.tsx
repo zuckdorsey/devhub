@@ -74,11 +74,10 @@ export function TaskBoardView({ tasks, projects }: TaskBoardViewProps) {
         if (task) {
             const formData = new FormData();
             formData.append("status", newStatus);
-            // Preserve other fields
             formData.append("title", task.title);
-            formData.append("type", task.type);
             formData.append("priority", task.priority);
             if (task.description) formData.append("description", task.description);
+            if (task.start_time) formData.append("start_time", task.start_time);
             if (task.due_date) formData.append("due_date", task.due_date);
             if (task.project_id) formData.append("project_id", task.project_id);
 

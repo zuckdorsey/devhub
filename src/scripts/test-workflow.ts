@@ -29,7 +29,6 @@ async function testWorkflow() {
         const task = await createTask({
             title: "Test Task",
             status: "Backlog", // Should be valid in new default workflow
-            type: "Daily",
             priority: "Medium",
             project_id: projectId
         });

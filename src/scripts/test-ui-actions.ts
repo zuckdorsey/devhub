@@ -60,7 +60,6 @@ async function verifyUIActions() {
         const task = await createTask({
             title: "Test Task",
             status: "Todo",
-            type: "Daily",
             priority: "Medium",
             project_id: project.id,
             section_id: sections[0].id

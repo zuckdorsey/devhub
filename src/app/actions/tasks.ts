@@ -10,23 +10,35 @@ export async function createTaskAction(formData: FormData) {
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const status = formData.get("status") as "Todo" | "In Progress" | "Done";
-    const type = formData.get("type") as "Daily" | "Weekly";
     const priority = formData.get("priority") as "Low" | "Medium" | "High" | "Critical";
+    const start_time = formData.get("start_time") as string;
     const due_date = formData.get("due_date") as string;
-    const project_id = formData.get("project_id") as string;
+    const raw_project_id = formData.get("project_id") as string | null;
 
-    if (!title || !status || !type || !priority) {
+    if (!title || !status || !priority) {
         throw new Error("Missing required fields");
     }
+
+    const project_id = raw_project_id && raw_project_id !== "none" ? raw_project_id : undefined;
+
+    const parseDate = (value: string | null) => {
+        if (!value) return undefined;
+        try {
+            const d = new Date(value);
+            return isNaN(d.getTime()) ? undefined : d.toISOString();
+        } catch {
+            return undefined;
+        }
+    };
 
     await createTask({
         title,
         description,
         status,
-        type,
         priority,
-        due_date: due_date || undefined,
-        project_id: project_id || undefined,
+        start_time: parseDate(start_time),
+        due_date: parseDate(due_date),
+        project_id,
     });
 
     revalidatePath("/tasks");
@@ -39,31 +51,32 @@ export async function updateTaskAction(id: string, formData: FormData) {
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const status = formData.get("status") as "Todo" | "In Progress" | "Done";
-    const type = formData.get("type") as "Daily" | "Weekly";
     const priority = formData.get("priority") as "Low" | "Medium" | "High" | "Critical";
+    const start_time = formData.get("start_time") as string;
     const due_date = formData.get("due_date") as string;
-    const project_id = formData.get("project_id") as string;
+    const raw_project_id = formData.get("project_id") as string | null;
 
-    let formattedDueDate = undefined;
-    if (due_date) {
+    const project_id = raw_project_id && raw_project_id !== "none" ? raw_project_id : undefined;
+
+    const parseDate = (value: string | null) => {
+        if (!value) return undefined;
         try {
-            const date = new Date(due_date);
-            if (!isNaN(date.getTime())) {
-                formattedDueDate = date.toISOString();
-            }
-        } catch (e) {
-            console.error("Invalid date format:", due_date);
+            const d = new Date(value);
+            return isNaN(d.getTime()) ? undefined : d.toISOString();
+        } catch {
+            console.error("Invalid date format:", value);
+            return undefined;
         }
-    }
+    };
 
     const updatedTask = await updateTask(id, {
         title,
         description,
         status,
-        type,
         priority,
-        due_date: formattedDueDate,
-        project_id: project_id || undefined,
+        start_time: parseDate(start_time),
+        due_date: parseDate(due_date),
+        project_id,
     });
 
     // Check if task is done and has a GitHub issue number

@@ -38,13 +38,11 @@ interface TasksClientProps {
 
 export function TasksClient({ initialTasks, projects, sections }: TasksClientProps) {
     const [view, setView] = useState<"board" | "table">("board");
-    const [filterType, setFilterType] = useState<"all" | "Daily" | "Weekly">("all");
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedProject, setSelectedProject] = useState<string>("all");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const filteredTasks = initialTasks.filter((task) => {
-        if (filterType !== "all" && task.type !== filterType) return false;
         if (selectedProject !== "all" && task.project_id !== selectedProject) return false;
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
@@ -107,7 +105,7 @@ export function TasksClient({ initialTasks, projects, sections }: TasksClientPro
                         Tasks
                     </h1>
                     <p className="text-muted-foreground text-lg">
-                        Manage your daily and weekly tasks efficiently.
+                        Manage your tasks with clear start times and deadlines.
                     </p>
                 </div>
                 <Button onClick={() => setIsDialogOpen(true)} className="gap-2 shadow-lg shadow-primary/20">
@@ -160,42 +158,6 @@ export function TasksClient({ initialTasks, projects, sections }: TasksClientPro
                             ))}
                         </SelectContent>
                     </Select>
-
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="h-10 gap-2 bg-muted/30 border-muted hover:border-primary/50">
-                                <Filter className="h-4 w-4" />
-                                {filterType === 'all' ? 'All Types' : filterType}
-                                {filterType !== 'all' && (
-                                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                                        1
-                                    </Badge>
-                                )}
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-40">
-                            <DropdownMenuLabel>Filter by Type</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuCheckboxItem
-                                checked={filterType === 'all'}
-                                onCheckedChange={() => setFilterType('all')}
-                            >
-                                All Tasks
-                            </DropdownMenuCheckboxItem>
-                            <DropdownMenuCheckboxItem
-                                checked={filterType === 'Daily'}
-                                onCheckedChange={() => setFilterType('Daily')}
-                            >
-                                Daily Tasks
-                            </DropdownMenuCheckboxItem>
-                            <DropdownMenuCheckboxItem
-                                checked={filterType === 'Weekly'}
-                                onCheckedChange={() => setFilterType('Weekly')}
-                            >
-                                Weekly Tasks
-                            </DropdownMenuCheckboxItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                 </div>
 
                 <ViewSwitcher view={view} onViewChange={setView} />

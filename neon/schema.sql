@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS tasks (
   title VARCHAR(255) NOT NULL,
   description TEXT,
   status VARCHAR(50) NOT NULL CHECK (status IN ('Todo', 'In Progress', 'Done')),
-  type VARCHAR(50) NOT NULL CHECK (type IN ('Daily', 'Weekly')),
   priority VARCHAR(20) NOT NULL CHECK (priority IN ('Low', 'Medium', 'High', 'Critical')),
+  start_time TIMESTAMP WITH TIME ZONE,
   due_date TIMESTAMP WITH TIME ZONE,
   project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
   github_issue_number INTEGER

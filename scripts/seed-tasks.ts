@@ -16,8 +16,8 @@ async function seedTasks() {
         title TEXT NOT NULL,
         description TEXT,
         status TEXT CHECK (status IN ('Todo', 'In Progress', 'Done')) NOT NULL DEFAULT 'Todo',
-        type TEXT CHECK (type IN ('Daily', 'Weekly')) NOT NULL DEFAULT 'Daily',
         priority TEXT CHECK (priority IN ('Low', 'Medium', 'High', 'Critical')) DEFAULT 'Medium',
+                start_time TIMESTAMP WITH TIME ZONE,
         due_date TIMESTAMP WITH TIME ZONE,
         project_id UUID REFERENCES projects(id) ON DELETE CASCADE
       );
@@ -36,7 +36,6 @@ async function seedTasks() {
                 title: "Fix navigation bug",
                 description: "Navigation menu is not closing on mobile click.",
                 status: "Todo",
-                type: "Daily",
                 priority: "High",
                 project_index: 0, // Index in the fetched projects array
             },
@@ -44,7 +43,6 @@ async function seedTasks() {
                 title: "Implement user authentication",
                 description: "Set up NextAuth.js with Google and GitHub providers.",
                 status: "In Progress",
-                type: "Weekly",
                 priority: "Critical",
                 project_index: 0,
             },
@@ -52,7 +50,6 @@ async function seedTasks() {
                 title: "Update documentation",
                 description: "Add API reference and setup guide.",
                 status: "Done",
-                type: "Daily",
                 priority: "Low",
                 project_index: 1,
             },
@@ -60,7 +57,6 @@ async function seedTasks() {
                 title: "Refactor database schema",
                 description: "Optimize queries and add indexes.",
                 status: "Todo",
-                type: "Weekly",
                 priority: "Medium",
                 project_index: 1,
             },
@@ -68,7 +64,6 @@ async function seedTasks() {
                 title: "Design new landing page",
                 description: "Create high-fidelity mockups in Figma.",
                 status: "In Progress",
-                type: "Weekly",
                 priority: "High",
                 project_index: 2,
             },
@@ -76,7 +71,6 @@ async function seedTasks() {
                 title: "Daily standup meeting",
                 description: "Discuss progress and blockers.",
                 status: "Done",
-                type: "Daily",
                 priority: "Medium",
                 project_index: 0,
             }
@@ -88,14 +82,14 @@ async function seedTasks() {
 
             await sql`
         INSERT INTO tasks (
-          title, description, status, type, priority, project_id, due_date
+                    title, description, status, priority, project_id, start_time, due_date
         ) VALUES (
           ${task.title},
           ${task.description},
           ${task.status},
-          ${task.type},
           ${task.priority},
           ${project.id},
+                    ${new Date().toISOString()},
           ${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()} -- Due in 7 days
         )
       `;

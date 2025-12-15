@@ -147,11 +147,10 @@ export function TaskCard({ task, projects = [], sections = [], workflow }: TaskC
 
                                         const formData = new FormData();
                                         formData.append("status", newStatus);
-                                        // Preserve other fields
                                         formData.append("title", task.title);
-                                        formData.append("type", task.type);
                                         formData.append("priority", task.priority);
                                         if (task.description) formData.append("description", task.description);
+                                        if (task.start_time) formData.append("start_time", task.start_time);
                                         if (task.due_date) formData.append("due_date", task.due_date);
                                         if (task.project_id) formData.append("project_id", task.project_id);
 
@@ -197,11 +196,10 @@ export function TaskCard({ task, projects = [], sections = [], workflow }: TaskC
                                                     onClick={async () => {
                                                         const formData = new FormData();
                                                         formData.append("priority", priority);
-                                                        // Preserve other fields
                                                         formData.append("title", task.title);
                                                         formData.append("status", task.status);
-                                                        formData.append("type", task.type);
                                                         if (task.description) formData.append("description", task.description);
+                                                        if (task.start_time) formData.append("start_time", task.start_time);
                                                         if (task.due_date) formData.append("due_date", task.due_date);
                                                         if (task.project_id) formData.append("project_id", task.project_id);
 
@@ -340,10 +338,16 @@ export function TaskCard({ task, projects = [], sections = [], workflow }: TaskC
                         <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 font-medium border ${getPriorityColor(task.priority)}`}>
                             {task.priority}
                         </Badge>
+                        {task.start_time && (
+                            <div className="flex items-center">
+                                <Clock className="mr-1 h-3 w-3" />
+                                {new Date(task.start_time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                        )}
                         {task.due_date && (
                             <div className="flex items-center">
                                 <CalendarDays className="mr-1 h-3 w-3" />
-                                {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                {new Date(task.due_date).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                             </div>
                         )}
                         {(task.subtask_count || 0) > 0 && (

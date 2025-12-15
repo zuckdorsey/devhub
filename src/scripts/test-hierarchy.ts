@@ -35,7 +35,6 @@ async function verifyHierarchy() {
         const task = await createTask({
             title: "Implement API",
             status: "Todo",
-            type: "Daily",
             priority: "High",
             project_id: project.id,
             section_id: section.id,

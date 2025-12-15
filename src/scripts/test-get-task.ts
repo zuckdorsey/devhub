@@ -10,7 +10,6 @@ async function testGetTask() {
         const task = await createTask({
             title: "Test Get Task",
             status: "Todo",
-            type: "Daily",
             priority: "Low"
         });
         taskId = task.id;

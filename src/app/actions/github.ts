@@ -41,7 +41,6 @@ export async function importTasksFromGitHubAction(projectId: string, issuesJson:
             title: issue.title,
             description: issue.body || "",
             status: "Todo",
-            type: "Daily", // Default type
             priority: "Medium", // Default priority
             project_id: projectId,
             github_issue_number: issue.number,
