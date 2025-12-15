@@ -70,6 +70,14 @@ export interface GitHubIssue {
     };
 }
 
+export interface GitHubTag {
+    name: string;
+    commit: {
+        sha: string;
+        url: string;
+    };
+}
+
 async function fetchGitHub<T>(path: string, options?: RequestInit): Promise<T | null> {
     let token = process.env.GITHUB_TOKEN;
 
@@ -142,8 +150,51 @@ export async function getRepoDetails(repoUrl: string): Promise<GitHubRepo | null
 export async function getCommits(repoUrl: string, limit = 5): Promise<GitHubCommit[]> {
     const repoInfo = parseRepoUrl(repoUrl);
     if (!repoInfo) return [];
-    const commits = await fetchGitHub<GitHubCommit[]>(`/repos/${repoInfo.owner}/${repoInfo.repo}/commits?per_page=${limit}`);
-    return commits || [];
+
+    const { owner, repo } = repoInfo;
+    const branch = "main"; // default; UI can be extended later to choose branch
+
+    // Try cache first
+    try {
+        const { getCachedCommits } = await import("@/lib/githubCommitsCache");
+        const cached = await getCachedCommits(`${owner}/${repo}`, branch);
+        if (cached && cached.length > 0) {
+            // Map cached shape back into minimal GitHubCommit-like objects used by UI
+            return cached.slice(0, limit).map((c) => ({
+                sha: c.sha,
+                commit: {
+                    message: c.message,
+                    author: {
+                        name: c.author,
+                        date: c.date,
+                    },
+                },
+                author: null,
+                html_url: `https://github.com/${owner}/${repo}/commit/${c.sha}`,
+            }));
+        }
+    } catch (error) {
+        console.error("Error reading GitHub commits cache:", error);
+    }
+
+    // Cache miss or stale: fetch from GitHub
+    const path = `/repos/${owner}/${repo}/commits?per_page=${limit}&sha=${branch}`;
+    const commits = await fetchGitHub<GitHubCommit[]>(path);
+
+    if (!commits || commits.length === 0) {
+        return [];
+    }
+
+    // Save minimal subset into cache for future requests
+    try {
+        const { saveCachedCommits, mapCommitsToCached } = await import("@/lib/githubCommitsCache");
+        const minimal = mapCommitsToCached(commits);
+        await saveCachedCommits(`${owner}/${repo}`, branch, minimal);
+    } catch (error) {
+        console.error("Error saving GitHub commits to cache:", error);
+    }
+
+    return commits;
 }
 
 export async function getContributors(repoUrl: string, limit = 10): Promise<GitHubContributor[]> {
@@ -195,4 +246,12 @@ export async function closeIssue(owner: string, repo: string, issueNumber: numbe
         method: "PATCH",
         body: JSON.stringify({ state: "closed" }),
     });
+}
+
+export async function getTags(repoUrl: string, limit = 50): Promise<GitHubTag[]> {
+    const repoInfo = parseRepoUrl(repoUrl);
+    if (!repoInfo) return [];
+
+    const tags = await fetchGitHub<GitHubTag[]>(`/repos/${repoInfo.owner}/${repoInfo.repo}/tags?per_page=${limit}`);
+    return tags || [];
 }
