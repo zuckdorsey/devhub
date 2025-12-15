@@ -3,11 +3,11 @@ import { GitHubSettings } from "@/components/GitHubSettings";
 import { VercelSettings } from "@/components/VercelSettings";
 import { WhatsAppSettings } from "@/components/WhatsAppSettings";
 import { WakaTimeSettings } from "@/components/WakaTimeSettings";
-import { getIntegrationStatus } from "@/app/actions/settings";
+import { getIntegrationStatus, saveSettingAction } from "@/app/actions/settings";
 import { getSetting } from "@/lib/settings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, Plug, Palette, User, Bell, Shield } from "lucide-react";
+import { Settings, Plug, Palette, Bell } from "lucide-react";
 
 export default async function SettingsPage() {
     const status = await getIntegrationStatus();
@@ -16,6 +16,14 @@ export default async function SettingsPage() {
     const whatsappToken = await getSetting("whatsapp_token");
     const whatsappTarget = await getSetting("whatsapp_target");
     const wakatimeKey = await getSetting("wakatime_api_key");
+
+    const suggestVersionSetting = await getSetting("automation_suggest_version_on_all_done");
+    const warnCommitsSetting = await getSetting("automation_warn_commits_without_task_reference");
+    const tagMappingSetting = await getSetting("automation_show_tag_version_mapping");
+
+    const suggestVersionEnabled = suggestVersionSetting !== "false";
+    const warnCommitsEnabled = warnCommitsSetting !== "false";
+    const tagMappingEnabled = tagMappingSetting !== "false";
 
     return (
         <div className="container mx-auto py-10 px-4 max-w-7xl">
@@ -64,10 +72,65 @@ export default async function SettingsPage() {
                             <Card className="border bg-card/50 backdrop-blur-sm">
                                 <CardHeader>
                                     <CardTitle>General Settings</CardTitle>
-                                    <CardDescription>Manage your general application settings.</CardDescription>
+                                    <CardDescription>Control light automations that help you manage projects.</CardDescription>
                                 </CardHeader>
-                                <CardContent className="text-muted-foreground text-sm">
-                                    General settings content will go here.
+                                <CardContent className="space-y-4 text-sm">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div>
+                                            <p className="font-medium">Suggest version when all tasks are done</p>
+                                            <p className="text-muted-foreground text-xs mt-1">
+                                                When every task in a project is marked Done, show a non-intrusive hint to create a snapshot version.
+                                            </p>
+                                        </div>
+                                        <form
+                                            action={saveSettingAction.bind(null, "automation_suggest_version_on_all_done", (!suggestVersionEnabled).toString())}
+                                        >
+                                            <button
+                                                type="submit"
+                                                className="px-3 py-1.5 rounded-full text-xs font-medium border bg-background hover:bg-secondary transition-colors"
+                                            >
+                                                {suggestVersionEnabled ? "Disable" : "Enable"}
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <div className="flex items-start justify-between gap-4 pt-3 border-t border-border/50">
+                                        <div>
+                                            <p className="font-medium">Warn on commits without task reference</p>
+                                            <p className="text-muted-foreground text-xs mt-1">
+                                                In the repository view, highlight commits that are not linked to any task.
+                                            </p>
+                                        </div>
+                                        <form
+                                            action={saveSettingAction.bind(null, "automation_warn_commits_without_task_reference", (!warnCommitsEnabled).toString())}
+                                        >
+                                            <button
+                                                type="submit"
+                                                className="px-3 py-1.5 rounded-full text-xs font-medium border bg-background hover:bg-secondary transition-colors"
+                                            >
+                                                {warnCommitsEnabled ? "Disable" : "Enable"}
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <div className="flex items-start justify-between gap-4 pt-3 border-t border-border/50">
+                                        <div>
+                                            <p className="font-medium">Show GitHub tag → version mapping</p>
+                                            <p className="text-muted-foreground text-xs mt-1">
+                                                On the Versions tab, show which GitHub tags correspond to each project version.
+                                            </p>
+                                        </div>
+                                        <form
+                                            action={saveSettingAction.bind(null, "automation_show_tag_version_mapping", (!tagMappingEnabled).toString())}
+                                        >
+                                            <button
+                                                type="submit"
+                                                className="px-3 py-1.5 rounded-full text-xs font-medium border bg-background hover:bg-secondary transition-colors"
+                                            >
+                                                {tagMappingEnabled ? "Disable" : "Enable"}
+                                            </button>
+                                        </form>
+                                    </div>
                                 </CardContent>
                             </Card>
                         </TabsContent>

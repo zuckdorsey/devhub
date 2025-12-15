@@ -10,10 +10,8 @@ import { Input } from "@/components/ui/input";
 
 export const dynamic = "force-dynamic";
 
-export default async function ImportProjectPage({
-    searchParams,
-}: {
-    searchParams?: { q?: string };
+export default async function ImportProjectPage(props: {
+    searchParams: Promise<{ q?: string }>;
 }) {
     let repos: GitHubRepo[] = [];
     let error = null;
@@ -24,7 +22,8 @@ export default async function ImportProjectPage({
         error = "Failed to fetch repositories. Please check your GitHub token in Settings.";
     }
 
-    const query = searchParams?.q?.toLowerCase().trim() || "";
+    const { q } = await props.searchParams;
+    const query = q?.toLowerCase().trim() || "";
     const filteredRepos = query
         ? repos.filter((repo) => {
               const name = repo.name?.toLowerCase() || "";
@@ -67,7 +66,7 @@ export default async function ImportProjectPage({
                             <Input
                                 name="q"
                                 placeholder="Search repositories by name or description..."
-                                defaultValue={searchParams?.q || ""}
+                                defaultValue={q || ""}
                                 className="pl-9"
                             />
                         </div>

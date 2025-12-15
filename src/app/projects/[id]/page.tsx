@@ -19,6 +19,11 @@ import { ProjectSettings } from "./settings/ProjectSettings";
 
 import { ShareProjectButton } from "@/components/ShareProjectButton";
 import { RepositoryTab } from "./repository/RepositoryTab";
+import { VersionsTab } from "./VersionsTab";
+import { getProjectVersions } from "@/lib/projectVersions";
+import { getSetting } from "@/lib/settings";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Lightbulb } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +56,19 @@ export default async function ProjectPage({ params }: ProjectDetailsPageProps) {
         vercelProjects = await fetchProjects();
     } catch (error) {
         console.error("Failed to fetch Vercel projects list:", error);
+    }
+
+    const allTasksDone = tasks.length > 0 && tasks.every((task) => task.status === "Done");
+    let showVersionSuggestion = false;
+
+    if (allTasksDone) {
+        const [suggestSetting, versions] = await Promise.all([
+            getSetting("automation_suggest_version_on_all_done"),
+            getProjectVersions(id),
+        ]);
+
+        const suggestEnabled = suggestSetting !== "false";
+        showVersionSuggestion = suggestEnabled && versions.length === 0;
     }
 
     if (project.vercel_project_id) {
@@ -183,6 +201,18 @@ export default async function ProjectPage({ params }: ProjectDetailsPageProps) {
                     <Separator />
 
                     <section className="space-y-6">
+                        {showVersionSuggestion && (
+                            <Alert className="border-dashed border-primary/40 bg-primary/5">
+                                <Lightbulb className="h-4 w-4" />
+                                <AlertTitle>All tasks are done</AlertTitle>
+                                <AlertDescription>
+                                    Capture the current state as a project version snapshot.
+                                    You can create a version from the Repository tab using the
+                                    commit history, or from the Versions tab.
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
                         <Tabs defaultValue="tasks" className="w-full">
                             <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md py-4 -mx-4 px-4 md:mx-0 md:px-0">
                                 <TabsList className="w-full h-auto p-1 bg-muted/50 rounded-full border">
@@ -199,6 +229,10 @@ export default async function ProjectPage({ params }: ProjectDetailsPageProps) {
                                     <TabsTrigger value="deployments" className="flex-1 rounded-full data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300 py-2.5">
                                         <Rocket className="h-4 w-4 mr-2" />
                                         Deploys
+                                    </TabsTrigger>
+                                    <TabsTrigger value="versions" className="flex-1 rounded-full data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300 py-2.5">
+                                        <Layers className="h-4 w-4 mr-2" />
+                                        Versions
                                     </TabsTrigger>
                                     <TabsTrigger value="repository" className="flex-1 rounded-full data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300 py-2.5">
                                         <Github className="h-4 w-4 mr-2" />
@@ -221,9 +255,12 @@ export default async function ProjectPage({ params }: ProjectDetailsPageProps) {
                                 <TabsContent value="deployments" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                                     <DeploymentsTab deployments={deployments} projectId={project.vercel_project_id} />
                                 </TabsContent>
+                                <TabsContent value="versions" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+                                    <VersionsTab projectId={project.id} repoUrl={project.github_repo} />
+                                </TabsContent>
                                 <TabsContent value="repository" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                                     {project.github_repo ? (
-                                        <RepositoryTab repoUrl={project.github_repo} />
+                                        <RepositoryTab repoUrl={project.github_repo} projectId={project.id} />
                                     ) : (
                                         <div className="flex flex-col items-center justify-center py-24 text-center border rounded-3xl bg-muted/10 border-dashed">
                                             <div className="h-20 w-20 rounded-full bg-muted/30 flex items-center justify-center mb-6">
