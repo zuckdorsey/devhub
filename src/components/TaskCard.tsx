@@ -4,7 +4,7 @@ import { Task } from "@/lib/tasks";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, CheckCircle2, Circle, Clock, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, CheckCircle2, Circle, Clock, MoreVertical, Pencil, Trash2, GitBranch } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -19,13 +19,15 @@ import {
 import { updateTaskAction, deleteTaskAction } from "@/app/actions/tasks";
 import Link from "next/link";
 import { TaskDialog } from "@/components/TaskDialog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { WorkflowStep } from "@/types";
 import { createSubtaskAction, deleteSubtaskAction, toggleSubtaskAction, fetchSubtasksAction } from "@/app/actions/subtasks";
 import { Subtask } from "@/lib/subtasks";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { fetchTaskBranchLinksAction } from "@/app/actions/branchLinks";
+import type { TaskBranchLink } from "@/lib/branchLinks";
 
 interface TaskCardProps {
     task: Task;
@@ -71,6 +73,21 @@ export function TaskCard({ task, projects = [], sections = [], workflow }: TaskC
     const [subtasks, setSubtasks] = useState<Subtask[]>([]);
     const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
     const [isLoadingSubtasks, setIsLoadingSubtasks] = useState(false);
+    const [branchLinks, setBranchLinks] = useState<TaskBranchLink[]>([]);
+
+    useEffect(() => {
+        let cancelled = false;
+        fetchTaskBranchLinksAction(task.id)
+            .then((links) => {
+                if (!cancelled) setBranchLinks(links || []);
+            })
+            .catch(() => {
+                if (!cancelled) setBranchLinks([]);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [task.id]);
 
     const toggleExpand = async () => {
         if (!isExpanded) {
@@ -357,6 +374,27 @@ export function TaskCard({ task, projects = [], sections = [], workflow }: TaskC
                             </div>
                         )}
                     </div>
+                    {branchLinks.length > 0 && (
+                        <div className="flex items-center gap-1">
+                            <GitBranch className="h-3 w-3" />
+                            <div className="flex flex-wrap gap-1">
+                                {branchLinks.slice(0, 2).map((link) => (
+                                    <Badge
+                                        key={`${link.repo_full_name}-${link.branch_name}`}
+                                        variant="outline"
+                                        className="text-[10px] px-1.5 py-0 h-5"
+                                    >
+                                        {link.branch_name}
+                                    </Badge>
+                                ))}
+                                {branchLinks.length > 2 && (
+                                    <span className="text-[10px] text-muted-foreground">
+                                        +{branchLinks.length - 2}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </CardFooter>
             </Card>
 
