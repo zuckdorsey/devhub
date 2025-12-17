@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Project } from "@/types";
+import { Task } from "@/lib/tasks";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,9 +21,10 @@ import Link from "next/link";
 
 interface ProjectCardActionsProps {
   project: Project;
+  tasks?: Task[];
 }
 
-export function ProjectCardActions({ project }: ProjectCardActionsProps) {
+export function ProjectCardActions({ project, tasks = [] }: ProjectCardActionsProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -186,6 +188,7 @@ export function ProjectCardActions({ project }: ProjectCardActionsProps) {
         onOpenChange={setEditDialogOpen}
         project={project}
         mode="edit"
+        tasks={tasks}
       />
 
       <DeleteProjectDialog

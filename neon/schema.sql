@@ -1,10 +1,23 @@
 CREATE TABLE IF NOT EXISTS projects (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
-  tags TEXT[],
-  timeline VARCHAR(100),
-  vercel_project_id VARCHAR(100),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  name TEXT NOT NULL,
+  status TEXT CHECK (status IN ('Idea', 'In Progress', 'Done', 'On Hold')) NOT NULL DEFAULT 'Idea',
+  tech_stack TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+  description TEXT,
+  api_endpoint TEXT,
+  github_repo TEXT,
+  priority TEXT CHECK (priority IN ('Low', 'Medium', 'High', 'Critical')) DEFAULT 'Medium',
+  progress INTEGER CHECK (progress >= 0 AND progress <= 100) DEFAULT 0,
+  related_issues TEXT[] DEFAULT ARRAY[]::TEXT[],
+  related_tasks TEXT[] DEFAULT ARRAY[]::TEXT[],
+  tags TEXT[] DEFAULT ARRAY[]::TEXT[],
+  start_date TIMESTAMP WITH TIME ZONE,
+  end_date TIMESTAMP WITH TIME ZONE,
+  image_url TEXT,
+  documentation_links TEXT[] DEFAULT ARRAY[]::TEXT[],
+  vercel_project_id TEXT,
+  workflow JSONB
 );
 
 CREATE TABLE IF NOT EXISTS tasks (

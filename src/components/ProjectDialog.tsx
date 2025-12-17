@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -29,13 +29,51 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Project } from "@/types";
+import { Task } from "@/lib/tasks";
 import { createProjectAction, updateProjectAction } from "@/app/actions";
-import { Loader2 } from "lucide-react";
+import {
+  fetchGitHubReposAction,
+  fetchVercelProjectsAction,
+  fetchGitHubIssuesForRepoAction,
+} from "@/app/actions/github";
+import {
+  Loader2,
+  X,
+  Plus,
+  Github,
+  Globe,
+  Settings,
+  Check,
+  ChevronsUpDown,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const projectFormSchema = z.object({
   name: z.string().min(1, "Project name is required"),
@@ -49,16 +87,41 @@ const projectFormSchema = z.object({
   related_issues: z.string().optional(),
   related_tasks: z.string().optional(),
   tags: z.string().optional(),
-  timeline: z.string().optional(),
+  start_date: z.string().optional(),
+  end_date: z.string().optional(),
+  documentation_links: z.string().optional(),
+  vercel_project_id: z.string().optional(),
 });
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
+
+interface GitHubRepo {
+  id: number;
+  name: string;
+  full_name: string;
+  html_url: string;
+  description: string;
+}
+
+interface VercelProject {
+  id: string;
+  name: string;
+  updatedAt: number;
+}
+
+interface GitHubIssue {
+  id: number;
+  number: number;
+  title: string;
+  state: "open" | "closed";
+}
 
 interface ProjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   project?: Project;
   mode: "create" | "edit";
+  tasks?: Task[];
 }
 
 export function ProjectDialog({
@@ -66,8 +129,21 @@ export function ProjectDialog({
   onOpenChange,
   project,
   mode,
+  tasks = [],
 }: ProjectDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [githubRepos, setGithubRepos] = useState<GitHubRepo[]>([]);
+  const [vercelProjects, setVercelProjects] = useState<VercelProject[]>([]);
+  const [githubIssues, setGithubIssues] = useState<GitHubIssue[]>([]);
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+  const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
+  const [isLoadingRepos, setIsLoadingRepos] = useState(false);
+  const [isLoadingVercel, setIsLoadingVercel] = useState(false);
+  const [isLoadingIssues, setIsLoadingIssues] = useState(false);
+  const [repoPopoverOpen, setRepoPopoverOpen] = useState(false);
+  const [vercelPopoverOpen, setVercelPopoverOpen] = useState(false);
+  const [tasksPopoverOpen, setTasksPopoverOpen] = useState(false);
+  const [issuesPopoverOpen, setIssuesPopoverOpen] = useState(false);
   const router = useRouter();
 
   const form = useForm<ProjectFormValues>({
@@ -84,9 +160,63 @@ export function ProjectDialog({
       related_issues: project?.related_issues?.join(", ") || "",
       related_tasks: project?.related_tasks?.join(", ") || "",
       tags: project?.tags?.join(", ") || "",
-      timeline: project?.timeline ? project.timeline.split('T')[0] : "",
+      start_date: project?.start_date ? project.start_date.split("T")[0] : "",
+      end_date: project?.end_date ? project.end_date.split("T")[0] : "",
+      documentation_links: project?.documentation_links?.join(", ") || "",
+      vercel_project_id: project?.vercel_project_id || "",
     },
   });
+
+  const selectedGithubRepo = form.watch("github_repo");
+
+  useEffect(() => {
+    if (open) {
+      setIsLoadingRepos(true);
+      setIsLoadingVercel(true);
+
+      fetchGitHubReposAction()
+        .then(setGithubRepos)
+        .finally(() => setIsLoadingRepos(false));
+
+      fetchVercelProjectsAction()
+        .then(setVercelProjects)
+        .finally(() => setIsLoadingVercel(false));
+
+      if (project?.related_tasks) {
+        setSelectedTasks(project.related_tasks);
+      }
+      if (project?.related_issues) {
+        setSelectedIssues(project.related_issues);
+      }
+    }
+  }, [open, project]);
+
+  useEffect(() => {
+    if (selectedGithubRepo) {
+      setIsLoadingIssues(true);
+      fetchGitHubIssuesForRepoAction(selectedGithubRepo)
+        .then(setGithubIssues)
+        .finally(() => setIsLoadingIssues(false));
+    } else {
+      setGithubIssues([]);
+    }
+  }, [selectedGithubRepo]);
+
+  const toggleTask = (taskId: string) => {
+    setSelectedTasks((prev) =>
+      prev.includes(taskId)
+        ? prev.filter((id) => id !== taskId)
+        : [...prev, taskId]
+    );
+  };
+
+  const toggleIssue = (issueNumber: string) => {
+    setSelectedIssues((prev) =>
+      prev.includes(issueNumber)
+        ? prev.filter((num) => num !== issueNumber)
+        : [...prev, issueNumber]
+    );
+  };
 
   async function onSubmit(data: ProjectFormValues) {
     setIsSubmitting(true);
@@ -100,10 +230,13 @@ export function ProjectDialog({
     formData.append("github_repo", data.github_repo || "");
     formData.append("priority", data.priority);
     formData.append("progress", data.progress.toString());
-    formData.append("related_issues", data.related_issues || "");
-    formData.append("related_tasks", data.related_tasks || "");
+    formData.append("related_issues", selectedIssues.join(", "));
+    formData.append("related_tasks", selectedTasks.join(", "));
     formData.append("tags", data.tags || "");
-    formData.append("timeline", data.timeline || "");
+    formData.append("start_date", data.start_date || "");
+    formData.append("end_date", data.end_date || "");
+    formData.append("documentation_links", data.documentation_links || "");
+    formData.append("vercel_project_id", data.vercel_project_id || "");
 
     try {
       const result =
@@ -114,6 +247,8 @@ export function ProjectDialog({
       if (result.success) {
         onOpenChange(false);
         form.reset();
+        setSelectedTasks([]);
+        setSelectedIssues([]);
         router.refresh();
       }
     } catch (error) {
@@ -125,50 +260,48 @@ export function ProjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {mode === "create" ? "Create New Project" : "Edit Project"}
-          </DialogTitle>
-          <DialogDescription>
-            {mode === "create"
-              ? "Add a new project to your dashboard."
-              : "Update the project details."}
-          </DialogDescription>
-        </DialogHeader>
-
+      <DialogContent className="sm:max-w-[700px]">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>Project Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="My Awesome Project" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <DialogHeader>
+              <DialogTitle>{mode === "create" ? "Create Project" : "Edit Project"}</DialogTitle>
+              <DialogDescription>
+                {mode === "create"
+                  ? "Add a new project to your dashboard."
+                  : "Make changes to your project here."}
+              </DialogDescription>
+            </DialogHeader>
 
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
+            <Tabs defaultValue="basic" className="mt-4">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                <TabsTrigger value="integrations">Integrations</TabsTrigger>
+                <TabsTrigger value="related">Related Items</TabsTrigger>
+              </TabsList>
+
+              {/* Basic Tab */}
+              <TabsContent value="basic" className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Project Name</Label>
+                    <Input
+                      id="name"
+                      {...form.register("name")}
+                      placeholder="My Project"
+                    />
+                    {form.formState.errors.name && (
+                      <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Status</Label>
                     <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={form.watch("status")}
+                      onValueChange={(value) => form.setValue("status", value as any)}
                     >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a status" />
-                        </SelectTrigger>
-                      </FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Idea">💡 Idea</SelectItem>
                         <SelectItem value="In Progress">🔄 In Progress</SelectItem>
@@ -176,26 +309,29 @@ export function ProjectDialog({
                         <SelectItem value="On Hold">⏸️ On Hold</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  </div>
+                </div>
 
-              <FormField
-                control={form.control}
-                name="priority"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Priority</FormLabel>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    {...form.register("description")}
+                    placeholder="Describe your project..."
+                    className="min-h-[80px]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Priority</Label>
                     <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={form.watch("priority")}
+                      onValueChange={(value) => form.setValue("priority", value as any)}
                     >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select priority" />
-                        </SelectTrigger>
-                      </FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Low">🟢 Low</SelectItem>
                         <SelectItem value="Medium">🟡 Medium</SelectItem>
@@ -203,178 +339,323 @@ export function ProjectDialog({
                         <SelectItem value="Critical">🔴 Critical</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Label>Progress</Label>
+                      <span className="text-sm text-muted-foreground">{form.watch("progress")}%</span>
+                    </div>
+                    <Slider
+                      min={0}
+                      max={100}
+                      step={5}
+                      value={[form.watch("progress")]}
+                      onValueChange={(vals) => form.setValue("progress", vals[0])}
+                    />
+                  </div>
+                </div>
 
-              <FormField
-                control={form.control}
-                name="progress"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>Progress - {field.value}%</FormLabel>
-                    <FormControl>
-                      <Slider
-                        min={0}
-                        max={100}
-                        step={5}
-                        value={[field.value]}
-                        onValueChange={(vals) => field.onChange(vals[0])}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="tech_stack">Tech Stack</Label>
+                    <Input
+                      id="tech_stack"
+                      {...form.register("tech_stack")}
+                      placeholder="Next.js, TypeScript, Tailwind"
+                    />
+                    <p className="text-xs text-muted-foreground">Comma-separated</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tags">Tags</Label>
+                    <Input
+                      id="tags"
+                      {...form.register("tags")}
+                      placeholder="API, Frontend"
+                    />
+                  </div>
+                </div>
 
-              <FormField
-                control={form.control}
-                name="api_endpoint"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>API Endpoint</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://api.example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="start_date">Start Date</Label>
+                    <Input
+                      id="start_date"
+                      type="date"
+                      {...form.register("start_date")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="end_date">End Date</Label>
+                    <Input
+                      id="end_date"
+                      type="date"
+                      {...form.register("end_date")}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
 
-              <FormField
-                control={form.control}
-                name="github_repo"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>GitHub Repository</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://github.com/user/repo" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Integrations Tab */}
+              <TabsContent value="integrations" className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  {/* GitHub Repository */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Github className="h-4 w-4" />
+                      GitHub Repository
+                    </Label>
+                    <Popover open={repoPopoverOpen} onOpenChange={setRepoPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !form.watch("github_repo") && "text-muted-foreground"
+                          )}
+                        >
+                          {isLoadingRepos ? (
+                            <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading...</>
+                          ) : form.watch("github_repo") ? (
+                            <span className="truncate">
+                              {githubRepos.find((r) => r.html_url === form.watch("github_repo"))?.full_name ||
+                                form.watch("github_repo")}
+                            </span>
+                          ) : (
+                            "Select repository"
+                          )}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[300px] p-0">
+                        <Command>
+                          <CommandInput placeholder="Search..." />
+                          <CommandList>
+                            <CommandEmpty>No repository found.</CommandEmpty>
+                            <CommandGroup>
+                              <CommandItem onSelect={() => { form.setValue("github_repo", ""); setRepoPopoverOpen(false); }}>
+                                <Check className={cn("mr-2 h-4 w-4", !form.watch("github_repo") ? "opacity-100" : "opacity-0")} />
+                                None
+                              </CommandItem>
+                              {githubRepos.map((repo) => (
+                                <CommandItem
+                                  key={repo.id}
+                                  value={repo.full_name}
+                                  onSelect={() => { form.setValue("github_repo", repo.html_url); setRepoPopoverOpen(false); }}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4", form.watch("github_repo") === repo.html_url ? "opacity-100" : "opacity-0")} />
+                                  {repo.full_name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
 
-              <FormField
-                control={form.control}
-                name="tech_stack"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>Tech Stack</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Next.js, TypeScript, Tailwind"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Separate technologies with commas
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  {/* Vercel Project */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      Vercel Project
+                    </Label>
+                    <Popover open={vercelPopoverOpen} onOpenChange={setVercelPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !form.watch("vercel_project_id") && "text-muted-foreground"
+                          )}
+                        >
+                          {isLoadingVercel ? (
+                            <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading...</>
+                          ) : form.watch("vercel_project_id") ? (
+                            vercelProjects.find((p) => p.id === form.watch("vercel_project_id"))?.name ||
+                            form.watch("vercel_project_id")
+                          ) : (
+                            "Select project"
+                          )}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[300px] p-0">
+                        <Command>
+                          <CommandInput placeholder="Search..." />
+                          <CommandList>
+                            <CommandEmpty>No project found.</CommandEmpty>
+                            <CommandGroup>
+                              <CommandItem onSelect={() => { form.setValue("vercel_project_id", ""); setVercelPopoverOpen(false); }}>
+                                <Check className={cn("mr-2 h-4 w-4", !form.watch("vercel_project_id") ? "opacity-100" : "opacity-0")} />
+                                None
+                              </CommandItem>
+                              {vercelProjects.map((proj) => (
+                                <CommandItem
+                                  key={proj.id}
+                                  value={proj.name}
+                                  onSelect={() => { form.setValue("vercel_project_id", proj.id); setVercelPopoverOpen(false); }}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4", form.watch("vercel_project_id") === proj.id ? "opacity-100" : "opacity-0")} />
+                                  {proj.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
 
-              <FormField
-                control={form.control}
-                name="tags"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>Tags</FormLabel>
-                    <FormControl>
-                      <Input placeholder="API, Frontend, Backend" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Separate tags with commas
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="api_endpoint" className="flex items-center gap-2">
+                      <Globe className="h-4 w-4" />
+                      API Endpoint
+                    </Label>
+                    <Input
+                      id="api_endpoint"
+                      {...form.register("api_endpoint")}
+                      placeholder="https://api.example.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="documentation_links">Documentation Links</Label>
+                    <Input
+                      id="documentation_links"
+                      {...form.register("documentation_links")}
+                      placeholder="https://docs.example.com"
+                    />
+                    <p className="text-xs text-muted-foreground">Comma-separated</p>
+                  </div>
+                </div>
+              </TabsContent>
 
-              <FormField
-                control={form.control}
-                name="timeline"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>Timeline</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Related Tab */}
+              <TabsContent value="related" className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Related Tasks */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Related Tasks</Label>
+                      <span className="text-xs text-muted-foreground">{selectedTasks.length} selected</span>
+                    </div>
 
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Describe your project..."
-                        className="resize-none"
-                        rows={3}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    {selectedTasks.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {selectedTasks.map((taskId) => {
+                          const task = tasks.find((t) => t.id === taskId);
+                          return task ? (
+                            <Badge key={taskId} variant="secondary" className="text-xs">
+                              {task.title.slice(0, 25)}{task.title.length > 25 ? "..." : ""}
+                              <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => toggleTask(taskId)} />
+                            </Badge>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
 
-              <FormField
-                control={form.control}
-                name="related_issues"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Related Issues</FormLabel>
-                    <FormControl>
-                      <Input placeholder="#1, #2, #3" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Comma-separated list
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    <Popover open={tasksPopoverOpen} onOpenChange={setTasksPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="w-full">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add tasks
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[300px] p-0">
+                        <Command>
+                          <CommandInput placeholder="Search tasks..." />
+                          <CommandList>
+                            <CommandEmpty>No tasks found.</CommandEmpty>
+                            <CommandGroup>
+                              {tasks.map((task) => (
+                                <CommandItem key={task.id} value={task.title} onSelect={() => toggleTask(task.id)}>
+                                  <Checkbox checked={selectedTasks.includes(task.id)} className="mr-2" />
+                                  <span className="truncate">{task.title}</span>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
 
-              <FormField
-                control={form.control}
-                name="related_tasks"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Related Tasks</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Task 1, Task 2" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Comma-separated list
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                  {/* Related Issues */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Related Issues</Label>
+                      <span className="text-xs text-muted-foreground">{selectedIssues.length} selected</span>
+                    </div>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isSubmitting}
-              >
+                    {selectedIssues.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {selectedIssues.map((num) => (
+                          <Badge key={num} variant="secondary" className="text-xs">
+                            #{num}
+                            <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => toggleIssue(num)} />
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+
+                    <Popover open={issuesPopoverOpen} onOpenChange={setIssuesPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          disabled={!selectedGithubRepo}
+                        >
+                          {isLoadingIssues ? (
+                            <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading...</>
+                          ) : !selectedGithubRepo ? (
+                            "Select GitHub repo first"
+                          ) : (
+                            <><Plus className="h-4 w-4 mr-2" /> Add issues</>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[300px] p-0">
+                        <Command>
+                          <CommandInput placeholder="Search issues..." />
+                          <CommandList>
+                            <CommandEmpty>No issues found.</CommandEmpty>
+                            <CommandGroup>
+                              {githubIssues.map((issue) => (
+                                <CommandItem
+                                  key={issue.id}
+                                  value={`#${issue.number} ${issue.title}`}
+                                  onSelect={() => toggleIssue(issue.number.toString())}
+                                >
+                                  <Checkbox checked={selectedIssues.includes(issue.number.toString())} className="mr-2" />
+                                  <span className="truncate">#{issue.number} {issue.title}</span>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    {!selectedGithubRepo && (
+                      <p className="text-xs text-muted-foreground">
+                        Link a GitHub repository in the Integrations tab to see issues.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <DialogFooter className="mt-6">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                {mode === "create" ? "Create Project" : "Save Changes"}
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {mode === "create" ? "Create Project" : "Save changes"}
               </Button>
             </DialogFooter>
           </form>

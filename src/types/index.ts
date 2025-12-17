@@ -19,7 +19,10 @@ export interface Project {
   related_issues?: string[];
   related_tasks?: string[];
   tags?: string[];
-  timeline?: string;
+  start_date?: string;
+  end_date?: string;
+  image_url?: string;
+  documentation_links?: string[];
   vercel_project_id?: string;
   workflow?: WorkflowStep[];
 }

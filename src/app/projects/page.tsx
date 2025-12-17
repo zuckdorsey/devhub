@@ -1,4 +1,5 @@
 import { getProjects } from "@/lib/projects";
+import { getTasks } from "@/lib/tasks";
 import { ProjectCardActions } from "./ProjectCardActions";
 import { CreateProjectButton } from "./CreateProjectButton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -11,10 +12,14 @@ export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
   let projects: Project[] = [];
+  let tasks: Awaited<ReturnType<typeof getTasks>> = [];
   let error = null;
 
   try {
-    projects = await getProjects();
+    [projects, tasks] = await Promise.all([
+      getProjects(),
+      getTasks(),
+    ]);
   } catch (e) {
     error = "Failed to load projects from database.";
     console.error(e);
@@ -52,7 +57,7 @@ export default async function ProjectsPage() {
               Import from GitHub
             </Link>
           </Button>
-          <CreateProjectButton />
+          <CreateProjectButton tasks={tasks} />
         </div>
       </div>
 
@@ -92,15 +97,16 @@ export default async function ProjectsPage() {
           <p className="text-muted-foreground mb-8 max-w-md">
             Create your first project to start tracking your progress and managing your development workflow.
           </p>
-          <CreateProjectButton />
+          <CreateProjectButton tasks={tasks} />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
-            <ProjectCardActions key={project.id} project={project} />
+            <ProjectCardActions key={project.id} project={project} tasks={tasks} />
           ))}
         </div>
       )}
     </div>
   );
 }
+

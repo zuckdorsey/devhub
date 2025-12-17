@@ -4,8 +4,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ProjectDialog } from "@/components/ProjectDialog";
 import { Plus } from "lucide-react";
+import { Task } from "@/lib/tasks";
 
-export function CreateProjectButton() {
+interface CreateProjectButtonProps {
+  tasks?: Task[];
+}
+
+export function CreateProjectButton({ tasks = [] }: CreateProjectButtonProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
@@ -19,6 +24,7 @@ export function CreateProjectButton() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         mode="create"
+        tasks={tasks}
       />
     </>
   );

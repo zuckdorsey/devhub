@@ -15,7 +15,8 @@ export async function sendProjectSummaryAction(projectId: string) {
         `*Status:* ${project.status}\n` +
         `*Priority:* ${project.priority || "Medium"}\n` +
         `*Progress:* ${project.progress}%\n` +
-        (project.timeline ? `*Timeline:* ${new Date(project.timeline).toLocaleDateString()}\n` : "") +
+        (project.start_date ? `*Start:* ${new Date(project.start_date).toLocaleDateString()}\n` : "") +
+        (project.end_date ? `*End:* ${new Date(project.end_date).toLocaleDateString()}\n` : "") +
         `\nCheck it out on DevHub!`;
 
     await sendWhatsAppMessage(target, message);

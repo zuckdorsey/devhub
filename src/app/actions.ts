@@ -15,7 +15,11 @@ export async function createProjectAction(formData: FormData) {
   const relatedIssues = formData.get("related_issues") as string;
   const relatedTasks = formData.get("related_tasks") as string;
   const tags = formData.get("tags") as string;
-  const timeline = formData.get("timeline") as string;
+  const startDate = formData.get("start_date") as string;
+  const endDate = formData.get("end_date") as string;
+  const imageUrl = formData.get("image_url") as string;
+  const documentationLinks = formData.get("documentation_links") as string;
+  const vercelProjectId = formData.get("vercel_project_id") as string;
 
   try {
     await createProject({
@@ -30,7 +34,11 @@ export async function createProjectAction(formData: FormData) {
       related_issues: relatedIssues ? relatedIssues.split(",").map((t) => t.trim()).filter(Boolean) : [],
       related_tasks: relatedTasks ? relatedTasks.split(",").map((t) => t.trim()).filter(Boolean) : [],
       tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
-      timeline: timeline || undefined,
+      start_date: startDate || undefined,
+      end_date: endDate || undefined,
+      image_url: imageUrl || undefined,
+      documentation_links: documentationLinks ? documentationLinks.split(",").map((t) => t.trim()).filter(Boolean) : [],
+      vercel_project_id: vercelProjectId || undefined,
     });
 
     revalidatePath("/projects");
@@ -53,7 +61,11 @@ export async function updateProjectAction(id: string, formData: FormData) {
   const relatedIssues = formData.get("related_issues") as string;
   const relatedTasks = formData.get("related_tasks") as string;
   const tags = formData.get("tags") as string;
-  const timeline = formData.get("timeline") as string;
+  const startDate = formData.get("start_date") as string;
+  const endDate = formData.get("end_date") as string;
+  const imageUrl = formData.get("image_url") as string;
+  const documentationLinks = formData.get("documentation_links") as string;
+  const vercelProjectId = formData.get("vercel_project_id") as string;
 
   try {
     await updateProject(id, {
@@ -68,7 +80,11 @@ export async function updateProjectAction(id: string, formData: FormData) {
       related_issues: relatedIssues ? relatedIssues.split(",").map((t) => t.trim()).filter(Boolean) : [],
       related_tasks: relatedTasks ? relatedTasks.split(",").map((t) => t.trim()).filter(Boolean) : [],
       tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
-      timeline: timeline || undefined,
+      start_date: startDate || undefined,
+      end_date: endDate || undefined,
+      image_url: imageUrl || undefined,
+      documentation_links: documentationLinks ? documentationLinks.split(",").map((t) => t.trim()).filter(Boolean) : [],
+      vercel_project_id: vercelProjectId || undefined,
     });
 
     revalidatePath("/projects");

@@ -1,7 +1,8 @@
 "use server";
 
 import { createProject } from "@/lib/projects";
-import { fetchIssuesAndPRs, createIssue } from "@/lib/github";
+import { fetchIssuesAndPRs, createIssue, fetchRepositories, getIssuesAndPRs } from "@/lib/github";
+import { fetchProjects as fetchVercelProjects } from "@/lib/vercel";
 import { createTask as createProjectTask } from "@/lib/tasks";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -78,5 +79,46 @@ export async function createIssueAction(formData: FormData) {
     } catch (error) {
         console.error("Failed to create issue:", error);
         throw error;
+    }
+}
+
+export async function fetchGitHubReposAction() {
+    try {
+        const repos = await fetchRepositories();
+        return repos.map(repo => ({
+            id: repo.id,
+            name: repo.name,
+            full_name: repo.full_name,
+            html_url: repo.html_url,
+            description: repo.description,
+        }));
+    } catch (error) {
+        console.error("Failed to fetch GitHub repos:", error);
+        return [];
+    }
+}
+
+export async function fetchVercelProjectsAction() {
+    try {
+        const projects = await fetchVercelProjects();
+        return projects;
+    } catch (error) {
+        console.error("Failed to fetch Vercel projects:", error);
+        return [];
+    }
+}
+
+export async function fetchGitHubIssuesForRepoAction(repoUrl: string) {
+    try {
+        const issues = await getIssuesAndPRs(repoUrl, 50);
+        return issues.map(issue => ({
+            id: issue.id,
+            number: issue.number,
+            title: issue.title,
+            state: issue.state,
+        }));
+    } catch (error) {
+        console.error("Failed to fetch GitHub issues:", error);
+        return [];
     }
 }
