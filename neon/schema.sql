@@ -108,3 +108,22 @@ CREATE TABLE IF NOT EXISTS project_version_commits (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (project_version_id, commit_sha, repo_full_name)
 );
+
+-- Local issues with optional GitHub sync
+CREATE TABLE IF NOT EXISTS issues (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  status VARCHAR(20) NOT NULL CHECK (status IN ('open', 'closed')) DEFAULT 'open',
+  priority VARCHAR(20) CHECK (priority IN ('Low', 'Medium', 'High', 'Critical')) DEFAULT 'Medium',
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+  labels TEXT[] DEFAULT ARRAY[]::TEXT[],
+  
+  -- GitHub sync fields
+  github_issue_number INTEGER,
+  github_issue_url TEXT,
+  github_synced_at TIMESTAMP WITH TIME ZONE,
+  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
