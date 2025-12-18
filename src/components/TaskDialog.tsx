@@ -19,7 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownEditor } from "@/components/MarkdownEditor";
 import { createTaskAction, updateTaskAction } from "@/app/actions/tasks";
 import { createSubtaskAction, deleteSubtaskAction, toggleSubtaskAction, fetchSubtasksAction } from "@/app/actions/subtasks";
 import { useState, useEffect } from "react";
@@ -52,6 +52,7 @@ export function TaskDialog({ open, onOpenChange, task, projects, sections = [], 
     const [newBranchName, setNewBranchName] = useState("");
     const [availableBranches, setAvailableBranches] = useState<string[]>([]);
     const [isLoadingBranches, setIsLoadingBranches] = useState(false);
+    const [description, setDescription] = useState(task?.description || "");
 
     const activeWorkflow = workflow || projects?.find(p => p.id === selectedProjectId)?.workflow;
 
@@ -60,6 +61,7 @@ export function TaskDialog({ open, onOpenChange, task, projects, sections = [], 
             fetchSubtasksAction(task.id).then(setSubtasks);
             setSelectedProjectId(task.project_id || "");
             setSelectedSectionId(task.section_id || "");
+            setDescription(task.description || "");
             fetchTaskBranchLinksAction(task.id)
                 .then(setBranchLinks)
                 .catch(() => setBranchLinks([]));
@@ -145,12 +147,13 @@ export function TaskDialog({ open, onOpenChange, task, projects, sections = [], 
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="description">Description</Label>
-                            <Textarea
-                                id="description"
-                                name="description"
-                                defaultValue={task?.description || ""}
-                                className="min-h-[100px]"
+                            <Label>Description</Label>
+                            <input type="hidden" name="description" value={description} />
+                            <MarkdownEditor
+                                value={description}
+                                onChange={setDescription}
+                                placeholder="Describe the task..."
+                                minHeight={120}
                             />
                         </div>
 

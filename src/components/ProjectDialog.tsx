@@ -49,7 +49,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownEditor } from "@/components/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
@@ -313,12 +313,12 @@ export function ProjectDialog({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    {...form.register("description")}
+                  <Label>Description</Label>
+                  <MarkdownEditor
+                    value={form.watch("description") || ""}
+                    onChange={(val) => form.setValue("description", val)}
                     placeholder="Describe your project..."
-                    className="min-h-[80px]"
+                    minHeight={150}
                   />
                 </div>
 

@@ -7,10 +7,7 @@ import { Save, Trash2, Star, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createNoteAction, updateNoteAction, deleteNoteAction, toggleFavoriteAction } from "@/app/actions/notes";
 import { toast } from "sonner";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import { Markdown } from "tiptap-markdown";
-import { EditorToolbar } from "./EditorToolbar";
+import { MarkdownEditor } from "@/components/MarkdownEditor";
 
 interface NoteEditorProps {
     note: Note | null; // null means creating new note
@@ -21,49 +18,22 @@ interface NoteEditorProps {
 
 export function NoteEditor({ note, onSave, onDelete, onCancel }: NoteEditorProps) {
     const [title, setTitle] = useState(note?.title || "");
+    const [content, setContent] = useState(note?.content || "");
     const [tags, setTags] = useState(note?.tags?.join(", ") || "");
     const [isSaving, setIsSaving] = useState(false);
 
-    const editor = useEditor({
-        extensions: [
-            StarterKit,
-            Markdown.configure({
-                html: false,
-                transformPastedText: true,
-                transformCopiedText: true,
-            }),
-        ],
-        content: note?.content || "",
-        editorProps: {
-            attributes: {
-                class: "prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-6",
-            },
-        },
-    });
-
-    // Update editor content when note changes
-    useEffect(() => {
-        if (editor && note) {
-            // Only update if content is different to avoid cursor jumps or loops
-            // For simplicity in this switch, we just set it if it's a new note selection
-            // In a real app, you might want to check if content matches
-            if ((editor.storage as any).markdown.getMarkdown() !== note.content) {
-                editor.commands.setContent(note.content || "");
-            }
-        }
-    }, [note, editor]);
-
-    // Reset form when note changes (for title and tags)
+    // Reset form when note changes
     useEffect(() => {
         if (note) {
             setTitle(note.title);
+            setContent(note.content || "");
             setTags(note.tags?.join(", ") || "");
         } else {
             setTitle("");
+            setContent("");
             setTags("");
-            editor?.commands.setContent("");
         }
-    }, [note, editor]);
+    }, [note]);
 
     const handleSave = async () => {
         if (!title.trim()) {
@@ -73,7 +43,6 @@ export function NoteEditor({ note, onSave, onDelete, onCancel }: NoteEditorProps
 
         setIsSaving(true);
         try {
-            const content = (editor?.storage as any).markdown.getMarkdown() || "";
             const formData = new FormData();
             formData.append("title", title);
             formData.append("content", content);
@@ -155,7 +124,7 @@ export function NoteEditor({ note, onSave, onDelete, onCancel }: NoteEditorProps
                 </div>
 
                 {/* Tags Input */}
-                <div className="px-4 pb-2">
+                <div className="px-4 pb-4">
                     <Input
                         value={tags}
                         onChange={(e) => setTags(e.target.value)}
@@ -163,14 +132,16 @@ export function NoteEditor({ note, onSave, onDelete, onCancel }: NoteEditorProps
                         className="text-sm text-muted-foreground border-none shadow-none focus-visible:ring-0 px-0 h-auto"
                     />
                 </div>
-
-                {/* Editor Toolbar */}
-                <EditorToolbar editor={editor} />
             </div>
 
             {/* Editor Content */}
-            <div className="flex-1 overflow-y-auto bg-background">
-                <EditorContent editor={editor} />
+            <div className="flex-1 overflow-y-auto p-4">
+                <MarkdownEditor
+                    value={content}
+                    onChange={setContent}
+                    placeholder="Start writing your note..."
+                    minHeight={400}
+                />
             </div>
         </div>
     );
