@@ -53,7 +53,7 @@ export async function getIssueById(id: string): Promise<Issue | null> {
     LEFT JOIN projects p ON i.project_id = p.id
     WHERE i.id = ${id}
   `;
-    return result[0] as Issue || null;
+    return (result[0] as Issue) ?? null;
 }
 
 export async function createIssue(data: {
@@ -97,27 +97,27 @@ export async function updateIssue(
     id: string,
     data: {
         title?: string;
-        description?: string;
+        description?: string | null;
         status?: "open" | "closed";
         priority?: "Low" | "Medium" | "High" | "Critical";
         project_id?: string | null;
         labels?: string[];
-        github_issue_number?: number;
-        github_issue_url?: string;
-        github_synced_at?: string;
+        github_issue_number?: number | null;
+        github_issue_url?: string | null;
+        github_synced_at?: string | null;
     }
 ): Promise<Issue> {
     const result = await sql`
     UPDATE issues SET
-      title = COALESCE(${data.title}, title),
-      description = COALESCE(${data.description}, description),
-      status = COALESCE(${data.status}, status),
-      priority = COALESCE(${data.priority}, priority),
-      project_id = COALESCE(${data.project_id}, project_id),
-      labels = COALESCE(${data.labels}, labels),
-      github_issue_number = COALESCE(${data.github_issue_number}, github_issue_number),
-      github_issue_url = COALESCE(${data.github_issue_url}, github_issue_url),
-      github_synced_at = COALESCE(${data.github_synced_at}, github_synced_at),
+      title = ${data.title !== undefined ? data.title : sql`title`},
+      description = ${data.description !== undefined ? data.description : sql`description`},
+      status = ${data.status !== undefined ? data.status : sql`status`},
+      priority = ${data.priority !== undefined ? data.priority : sql`priority`},
+      project_id = ${data.project_id !== undefined ? data.project_id : sql`project_id`},
+      labels = ${data.labels !== undefined ? data.labels : sql`labels`},
+      github_issue_number = ${data.github_issue_number !== undefined ? data.github_issue_number : sql`github_issue_number`},
+      github_issue_url = ${data.github_issue_url !== undefined ? data.github_issue_url : sql`github_issue_url`},
+      github_synced_at = ${data.github_synced_at !== undefined ? data.github_synced_at : sql`github_synced_at`},
       updated_at = CURRENT_TIMESTAMP
     WHERE id = ${id}
     RETURNING *

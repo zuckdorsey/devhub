@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
     Select,
     SelectContent,
@@ -12,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Issue } from "@/lib/issues";
 import { IssueCard } from "./IssueCard";
-import { Search, Filter } from "lucide-react";
+import { Search } from "lucide-react";
 
 interface IssueListProps {
     issues: Issue[];

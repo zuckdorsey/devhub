@@ -26,7 +26,7 @@ export async function createIssueAction(formData: FormData) {
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const status = (formData.get("status") as "open" | "closed") || "open";
-    const priority = (formData.get("priority") as string) || "Medium";
+    const priorityInput = (formData.get("priority") as string) || "Medium";
     const project_id = formData.get("project_id") as string;
     const labelsStr = formData.get("labels") as string;
     const syncToGitHub = formData.get("sync_to_github") === "true";
@@ -38,6 +38,12 @@ export async function createIssueAction(formData: FormData) {
     if (!title) {
         throw new Error("Title is required");
     }
+
+    // Validate priority
+    const allowedPriorities = ["Low", "Medium", "High", "Critical"];
+    const priority = allowedPriorities.includes(priorityInput) 
+        ? (priorityInput as "Low" | "Medium" | "High" | "Critical")
+        : "Medium";
 
     let github_issue_number: number | undefined;
     let github_issue_url: string | undefined;
@@ -67,7 +73,7 @@ export async function createIssueAction(formData: FormData) {
         title,
         description: description || undefined,
         status,
-        priority: priority as any,
+        priority,
         project_id: project_id || undefined,
         labels,
         github_issue_number,
@@ -86,7 +92,7 @@ export async function updateIssueAction(id: string, formData: FormData) {
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const status = formData.get("status") as "open" | "closed";
-    const priority = formData.get("priority") as string;
+    const priorityInput = formData.get("priority") as string;
     const project_id = formData.get("project_id") as string;
     const labelsStr = formData.get("labels") as string;
 
@@ -94,11 +100,17 @@ export async function updateIssueAction(id: string, formData: FormData) {
         ? labelsStr.split(",").map((l) => l.trim()).filter(Boolean)
         : undefined;
 
+    // Validate priority if provided
+    const allowedPriorities = ["Low", "Medium", "High", "Critical"];
+    const priority = priorityInput && allowedPriorities.includes(priorityInput)
+        ? (priorityInput as "Low" | "Medium" | "High" | "Critical")
+        : undefined;
+
     const issue = await updateIssue(id, {
         title: title || undefined,
         description: description || undefined,
         status: status || undefined,
-        priority: priority as any || undefined,
+        priority,
         project_id: project_id || undefined,
         labels,
     });

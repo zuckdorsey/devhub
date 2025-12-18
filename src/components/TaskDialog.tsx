@@ -368,7 +368,7 @@ export function TaskDialog({ open, onOpenChange, task, projects, sections = [], 
                                                 type="button"
                                                 className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs text-muted-foreground hover:bg-muted"
                                                 onClick={async () => {
-                                                    await unlinkTaskFromBranchAction(task.id, link.branch_name);
+                                                    await unlinkTaskFromBranchAction(task.id, link.repo_full_name, link.branch_name);
                                                     const updated = await fetchTaskBranchLinksAction(task.id);
                                                     setBranchLinks(updated);
                                                 }}
@@ -431,7 +431,7 @@ export function TaskDialog({ open, onOpenChange, task, projects, sections = [], 
                                     </Button>
                                 </div>
                                 <p className="text-[11px] text-muted-foreground">
-                                    Linking a branch is optional and uses the projects GitHub repository, if configured.
+                                    Linking a branch is optional and uses the project's GitHub repository, if configured.
                                 </p>
                             </div>
                         )}
