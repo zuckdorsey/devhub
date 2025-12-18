@@ -152,10 +152,16 @@ export default async function ProjectPage({ params }: ProjectDetailsPageProps) {
                                     <CalendarDays className="mr-2 h-4 w-4 text-primary" />
                                     Created {project.created_at ? new Date(project.created_at).toLocaleDateString('en-US', { dateStyle: 'medium' }) : 'Unknown'}
                                 </div>
-                                {project.timeline && (
+                                {project.start_date && (
                                     <div className="flex items-center px-3 py-1.5 rounded-full bg-background/40 border backdrop-blur-sm">
                                         <Clock className="mr-2 h-4 w-4 text-primary" />
-                                        Target: {new Date(project.timeline).toLocaleDateString('en-US', { dateStyle: 'medium' })}
+                                        Start: {new Date(project.start_date).toLocaleDateString('en-US', { dateStyle: 'medium' })}
+                                    </div>
+                                )}
+                                {project.end_date && (
+                                    <div className="flex items-center px-3 py-1.5 rounded-full bg-background/40 border backdrop-blur-sm">
+                                        <Clock className="mr-2 h-4 w-4 text-primary" />
+                                        End: {new Date(project.end_date).toLocaleDateString('en-US', { dateStyle: 'medium' })}
                                     </div>
                                 )}
                             </div>

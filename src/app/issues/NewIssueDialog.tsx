@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Select,
     SelectContent,
@@ -21,9 +22,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { createIssueAction } from "@/app/actions/github";
-import { Loader2, Plus } from "lucide-react";
-
+import { createIssueAction } from "@/app/actions/issues";
+import { Loader2, Plus, Github } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Project } from "@/types/index";
 
 interface NewIssueDialogProps {
@@ -34,27 +35,34 @@ export function NewIssueDialog({ projects }: NewIssueDialogProps) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [selectedProject, setSelectedProject] = useState<string>("");
+    const [syncToGitHub, setSyncToGitHub] = useState(false);
+    const router = useRouter();
+
+    // Projects that have GitHub repo (for sync option)
+    const projectsWithRepo = projects.filter((p) => p.github_repo);
+    const selectedProjectHasRepo = projectsWithRepo.some(
+        (p) => p.id === selectedProject
+    );
 
     const handleSubmit = async (formData: FormData) => {
         setLoading(true);
         try {
-            // Find the selected project to get the repo URL
-            const project = projects.find(p => p.id === selectedProject);
-            if (project && project.github_repo) {
-                formData.append("repoUrl", project.github_repo);
-                formData.append("projectId", project.id);
-                await createIssueAction(formData);
-                setOpen(false);
-                setSelectedProject("");
+            if (selectedProject) {
+                formData.append("project_id", selectedProject);
             }
+            formData.append("sync_to_github", syncToGitHub ? "true" : "false");
+
+            await createIssueAction(formData);
+            setOpen(false);
+            setSelectedProject("");
+            setSyncToGitHub(false);
+            router.refresh();
         } catch (error) {
             console.error("Failed to create issue", error);
         } finally {
             setLoading(false);
         }
     };
-
-    const validProjects = projects.filter(p => p.github_repo);
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -68,30 +76,20 @@ export function NewIssueDialog({ projects }: NewIssueDialogProps) {
                 <DialogHeader>
                     <DialogTitle>Create New Issue</DialogTitle>
                     <DialogDescription>
-                        Create a new issue on GitHub for one of your projects.
+                        Create a new issue. Optionally sync to GitHub if linked to a
+                        project.
                     </DialogDescription>
                 </DialogHeader>
 
                 <form action={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="project">Project</Label>
-                        <Select value={selectedProject} onValueChange={setSelectedProject} required>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a project" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {validProjects.map((project) => (
-                                    <SelectItem key={project.id} value={project.id}>
-                                        {project.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="space-y-2">
                         <Label htmlFor="title">Title</Label>
-                        <Input id="title" name="title" placeholder="Issue title" required />
+                        <Input
+                            id="title"
+                            name="title"
+                            placeholder="Issue title"
+                            required
+                        />
                     </div>
 
                     <div className="space-y-2">
@@ -104,9 +102,90 @@ export function NewIssueDialog({ projects }: NewIssueDialogProps) {
                         />
                     </div>
 
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="project">Project (optional)</Label>
+                            <Select
+                                value={selectedProject || "none"}
+                                onValueChange={(val) => setSelectedProject(val === "none" ? "" : val)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="No project" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">No project</SelectItem>
+                                    {projects.map((project) => (
+                                        <SelectItem key={project.id} value={project.id}>
+                                            {project.name}
+                                            {project.github_repo && " 🔗"}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="priority">Priority</Label>
+                            <Select name="priority" defaultValue="Medium">
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Low">🟢 Low</SelectItem>
+                                    <SelectItem value="Medium">🟡 Medium</SelectItem>
+                                    <SelectItem value="High">🟠 High</SelectItem>
+                                    <SelectItem value="Critical">🔴 Critical</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="labels">Labels</Label>
+                            <Input
+                                id="labels"
+                                name="labels"
+                                placeholder="bug, feature, docs"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="due_date">Due Date</Label>
+                            <Input
+                                id="due_date"
+                                name="due_date"
+                                type="date"
+                            />
+                        </div>
+                    </div>
+
+                    {selectedProjectHasRepo && (
+                        <div className="flex items-center space-x-2 p-3 rounded-lg bg-muted/50 border">
+                            <Checkbox
+                                id="sync_to_github"
+                                checked={syncToGitHub}
+                                onCheckedChange={(checked) =>
+                                    setSyncToGitHub(checked as boolean)
+                                }
+                            />
+                            <div className="flex items-center gap-2">
+                                <Github className="h-4 w-4" />
+                                <Label htmlFor="sync_to_github" className="text-sm cursor-pointer">
+                                    Also create on GitHub
+                                </Label>
+                            </div>
+                        </div>
+                    )}
+
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                        <Button type="submit" disabled={loading || !selectedProject}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={loading}>
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Create Issue
                         </Button>

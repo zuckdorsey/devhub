@@ -1,42 +1,20 @@
 import { getProjects } from "@/lib/projects";
-import { fetchIssuesAndPRs } from "@/lib/github";
+import { getIssues } from "@/lib/issues";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ExternalLink, Github, CircleDot, GitPullRequest } from "lucide-react";
-import Link from "next/link";
-import { ScrollArea } from "@/components/ui/scroll-area";
-
+import { CircleDot } from "lucide-react";
 import { NewIssueDialog } from "./NewIssueDialog";
-import { ConvertIssueToTaskButton } from "./ConvertIssueToTaskButton";
-import { IssueCard } from "./IssueCard";
 import { IssueList } from "./IssueList";
+import { ImportGitHubDialog } from "./ImportGitHubDialog";
 
 export const dynamic = "force-dynamic";
 
 export default async function IssuesPage() {
     const projects = await getProjects();
-    const projectsWithRepo = projects.filter(p => p.github_repo);
+    const issues = await getIssues();
 
-    const issuesByProject = await Promise.all(
-        projectsWithRepo.map(async (project) => {
-            try {
-                if (!project.github_repo) return { project, issues: [] };
-                const url = new URL(project.github_repo);
-                const pathParts = url.pathname.split("/").filter(Boolean);
-                if (pathParts.length < 2) return { project, issues: [] };
-
-                const [owner, repo] = pathParts;
-                const issues = await fetchIssuesAndPRs(owner, repo);
-                return { project, issues };
-            } catch (e) {
-                console.error(`Failed to fetch issues for ${project.name}`, e);
-                return { project, issues: [] };
-            }
-        })
-    );
-
-    const totalIssues = issuesByProject.reduce((acc, curr) => acc + curr.issues.length, 0);
+    const openIssues = issues.filter((i) => i.status === "open");
+    const syncedIssues = issues.filter((i) => i.github_issue_number);
+    const localIssues = issues.filter((i) => !i.github_issue_number);
 
     return (
         <div className="container mx-auto py-10 px-4 md:px-6 max-w-6xl space-y-8">
@@ -47,18 +25,27 @@ export default async function IssuesPage() {
                         Issue Tracker
                     </h1>
                     <p className="text-muted-foreground text-lg">
-                        Track and manage issues across all your connected projects.
+                        Track and manage issues. Optionally sync to GitHub.
                     </p>
                 </div>
-                <div className="flex items-center gap-4">
-                    <Badge variant="secondary" className="text-lg px-4 py-1">
-                        {totalIssues} Open Issues
-                    </Badge>
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="px-3 py-1">
+                            {openIssues.length} Open
+                        </Badge>
+                        <Badge variant="outline" className="px-3 py-1">
+                            {syncedIssues.length} Synced
+                        </Badge>
+                        <Badge variant="outline" className="px-3 py-1 text-muted-foreground">
+                            {localIssues.length} Local
+                        </Badge>
+                    </div>
+                    <ImportGitHubDialog projects={projects} />
                     <NewIssueDialog projects={projects} />
                 </div>
             </div>
 
-            <IssueList issuesByProject={issuesByProject} />
+            <IssueList issues={issues} />
         </div>
     );
 }

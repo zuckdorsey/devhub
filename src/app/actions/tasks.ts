@@ -14,12 +14,14 @@ export async function createTaskAction(formData: FormData) {
     const start_time = formData.get("start_time") as string;
     const due_date = formData.get("due_date") as string;
     const raw_project_id = formData.get("project_id") as string | null;
+    const raw_section_id = formData.get("section_id") as string | null;
 
     if (!title || !status || !priority) {
         throw new Error("Missing required fields");
     }
 
     const project_id = raw_project_id && raw_project_id !== "none" ? raw_project_id : undefined;
+    const section_id = raw_section_id && raw_section_id !== "none" ? raw_section_id : undefined;
 
     const parseDate = (value: string | null) => {
         if (!value) return undefined;
@@ -39,6 +41,7 @@ export async function createTaskAction(formData: FormData) {
         start_time: parseDate(start_time),
         due_date: parseDate(due_date),
         project_id,
+        section_id,
     });
 
     revalidatePath("/tasks");
@@ -55,8 +58,10 @@ export async function updateTaskAction(id: string, formData: FormData) {
     const start_time = formData.get("start_time") as string;
     const due_date = formData.get("due_date") as string;
     const raw_project_id = formData.get("project_id") as string | null;
+    const raw_section_id = formData.get("section_id") as string | null;
 
     const project_id = raw_project_id && raw_project_id !== "none" ? raw_project_id : undefined;
+    const section_id = raw_section_id && raw_section_id !== "none" ? raw_section_id : undefined;
 
     const parseDate = (value: string | null) => {
         if (!value) return undefined;
@@ -77,6 +82,7 @@ export async function updateTaskAction(id: string, formData: FormData) {
         start_time: parseDate(start_time),
         due_date: parseDate(due_date),
         project_id,
+        section_id,
     });
 
     // Check if task is done and has a GitHub issue number

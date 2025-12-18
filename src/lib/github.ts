@@ -58,6 +58,7 @@ export interface GitHubIssue {
     id: number;
     number: number;
     title: string;
+    body?: string;
     state: "open" | "closed";
     html_url: string;
     created_at: string;
@@ -65,6 +66,7 @@ export interface GitHubIssue {
         login: string;
         avatar_url: string;
     };
+    labels?: Array<{ name: string }>;
     pull_request?: {
         url: string;
     };
@@ -76,6 +78,15 @@ export interface GitHubTag {
         sha: string;
         url: string;
     };
+}
+
+export interface GitHubBranch {
+    name: string;
+    commit: {
+        sha: string;
+        url: string;
+    };
+    protected: boolean;
 }
 
 async function fetchGitHub<T>(path: string, options?: RequestInit): Promise<T | null> {
@@ -254,4 +265,14 @@ export async function getTags(repoUrl: string, limit = 50): Promise<GitHubTag[]>
 
     const tags = await fetchGitHub<GitHubTag[]>(`/repos/${repoInfo.owner}/${repoInfo.repo}/tags?per_page=${limit}`);
     return tags || [];
+}
+
+export async function getBranches(repoUrl: string, limit = 100): Promise<GitHubBranch[]> {
+    const repoInfo = parseRepoUrl(repoUrl);
+    if (!repoInfo) return [];
+
+    const branches = await fetchGitHub<GitHubBranch[]>(
+        `/repos/${repoInfo.owner}/${repoInfo.repo}/branches?per_page=${limit}`
+    );
+    return branches || [];
 }

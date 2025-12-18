@@ -39,14 +39,19 @@ export async function createProject(data: {
   related_issues?: string[];
   related_tasks?: string[];
   tags?: string[];
-  timeline?: string;
+  start_date?: string;
+  end_date?: string;
+  image_url?: string;
+  documentation_links?: string[];
+  vercel_project_id?: string;
 }): Promise<Project> {
   try {
     const [project] = await sql`
       INSERT INTO projects (
         name, status, tech_stack, description, created_at,
         api_endpoint, github_repo, priority, progress,
-        related_issues, related_tasks, tags, timeline, workflow
+        related_issues, related_tasks, tags, start_date, end_date,
+        image_url, documentation_links, vercel_project_id, workflow
       )
       VALUES (
         ${data.name},
@@ -61,7 +66,11 @@ export async function createProject(data: {
         ${data.related_issues || []},
         ${data.related_tasks || []},
         ${data.tags || []},
-        ${data.timeline || null},
+        ${data.start_date || null},
+        ${data.end_date || null},
+        ${data.image_url || null},
+        ${data.documentation_links || []},
+        ${data.vercel_project_id || null},
         ${JSON.stringify([
       { id: "backlog", name: "Backlog", color: "gray", type: "backlog" },
       { id: "in-progress", name: "In Progress", color: "blue", type: "started" },
@@ -92,7 +101,10 @@ export async function updateProject(
     related_issues?: string[];
     related_tasks?: string[];
     tags?: string[];
-    timeline?: string;
+    start_date?: string;
+    end_date?: string;
+    image_url?: string;
+    documentation_links?: string[];
     vercel_project_id?: string;
   }
 ): Promise<Project> {
@@ -111,7 +123,10 @@ export async function updateProject(
         related_issues = COALESCE(${data.related_issues || null}, related_issues),
         related_tasks = COALESCE(${data.related_tasks || null}, related_tasks),
         tags = COALESCE(${data.tags || null}, tags),
-        timeline = COALESCE(${data.timeline || null}, timeline),
+        start_date = COALESCE(${data.start_date || null}, start_date),
+        end_date = COALESCE(${data.end_date || null}, end_date),
+        image_url = COALESCE(${data.image_url || null}, image_url),
+        documentation_links = COALESCE(${data.documentation_links || null}, documentation_links),
         vercel_project_id = COALESCE(${data.vercel_project_id || null}, vercel_project_id)
       WHERE id = ${id}
       RETURNING *

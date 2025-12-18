@@ -1,10 +1,23 @@
 CREATE TABLE IF NOT EXISTS projects (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
-  tags TEXT[],
-  timeline VARCHAR(100),
-  vercel_project_id VARCHAR(100),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  name TEXT NOT NULL,
+  status TEXT CHECK (status IN ('Idea', 'In Progress', 'Done', 'On Hold')) NOT NULL DEFAULT 'Idea',
+  tech_stack TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+  description TEXT,
+  api_endpoint TEXT,
+  github_repo TEXT,
+  priority TEXT CHECK (priority IN ('Low', 'Medium', 'High', 'Critical')) DEFAULT 'Medium',
+  progress INTEGER CHECK (progress >= 0 AND progress <= 100) DEFAULT 0,
+  related_issues TEXT[] DEFAULT ARRAY[]::TEXT[],
+  related_tasks TEXT[] DEFAULT ARRAY[]::TEXT[],
+  tags TEXT[] DEFAULT ARRAY[]::TEXT[],
+  start_date TIMESTAMP WITH TIME ZONE,
+  end_date TIMESTAMP WITH TIME ZONE,
+  image_url TEXT,
+  documentation_links TEXT[] DEFAULT ARRAY[]::TEXT[],
+  vercel_project_id TEXT,
+  workflow JSONB
 );
 
 CREATE TABLE IF NOT EXISTS tasks (
@@ -94,4 +107,35 @@ CREATE TABLE IF NOT EXISTS project_version_commits (
   repo_full_name TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (project_version_id, commit_sha, repo_full_name)
+);
+
+-- Local issues with optional GitHub sync
+CREATE TABLE IF NOT EXISTS issues (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  status VARCHAR(20) NOT NULL CHECK (status IN ('open', 'closed')) DEFAULT 'open',
+  priority VARCHAR(20) CHECK (priority IN ('Low', 'Medium', 'High', 'Critical')) DEFAULT 'Medium',
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+  labels TEXT[] DEFAULT ARRAY[]::TEXT[],
+  due_date TIMESTAMP WITH TIME ZONE,
+  
+  -- GitHub sync fields
+  github_issue_number INTEGER,
+  github_issue_url TEXT,
+  github_synced_at TIMESTAMP WITH TIME ZONE,
+  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Task ↔ Branch links
+CREATE TABLE IF NOT EXISTS task_branch_links (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  repo_full_name TEXT NOT NULL,
+  branch_name TEXT NOT NULL,
+  source VARCHAR(20) NOT NULL DEFAULT 'manual' CHECK (source IN ('auto', 'manual')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (task_id, repo_full_name, branch_name)
 );
