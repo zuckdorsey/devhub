@@ -3,6 +3,7 @@ import { GitHubSettings } from "@/components/GitHubSettings";
 import { VercelSettings } from "@/components/VercelSettings";
 import { WhatsAppSettings } from "@/components/WhatsAppSettings";
 import { WakaTimeSettings } from "@/components/WakaTimeSettings";
+import { AISettings } from "@/components/AISettings";
 import { getIntegrationStatus, saveSettingAction } from "@/app/actions/settings";
 import { getSetting } from "@/lib/settings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +17,10 @@ export default async function SettingsPage() {
     const whatsappToken = await getSetting("whatsapp_token");
     const whatsappTarget = await getSetting("whatsapp_target");
     const wakatimeKey = await getSetting("wakatime_api_key");
+    const aiProvider = await getSetting("ai_provider") || "gemini";
+    const geminiApiKey = await getSetting("gemini_api_key");
+    const openRouterKey = await getSetting("openrouter_api_key");
+    const openRouterModel = await getSetting("openrouter_model");
 
     const suggestVersionSetting = await getSetting("automation_suggest_version_on_all_done");
     const warnCommitsSetting = await getSetting("automation_warn_commits_without_task_reference");
@@ -138,6 +143,12 @@ export default async function SettingsPage() {
                         <TabsContent value="integrations" className="mt-0 space-y-8 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                             <div className="grid gap-6">
                                 <GitHubSettings initialToken={githubToken || ""} />
+                                <AISettings
+                                    initialProvider={aiProvider}
+                                    initialGeminiKey={geminiApiKey || ""}
+                                    initialOpenRouterKey={openRouterKey || ""}
+                                    initialOpenRouterModel={openRouterModel || ""}
+                                />
                                 <VercelSettings initialToken={vercelToken || ""} />
                                 <WakaTimeSettings initialApiKey={wakatimeKey || ""} />
                                 <WhatsAppSettings initialToken={whatsappToken || ""} initialTarget={whatsappTarget || ""} />

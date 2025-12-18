@@ -80,3 +80,22 @@ export async function saveSettingAction(key: string, value: string) {
     await saveSetting(key, value);
     revalidatePath("/settings");
 }
+
+export async function saveAISettings(formData: FormData) {
+    const provider = formData.get("ai_provider") as string;
+    if (!provider) throw new Error("Provider is required");
+
+    await saveSetting("ai_provider", provider);
+
+    if (provider === "gemini") {
+        const key = formData.get("gemini_api_key") as string;
+        if (key) await saveSetting("gemini_api_key", key);
+    } else if (provider === "openrouter") {
+        const key = formData.get("openrouter_api_key") as string;
+        const model = formData.get("openrouter_model") as string;
+        if (key) await saveSetting("openrouter_api_key", key);
+        if (model) await saveSetting("openrouter_model", model);
+    }
+
+    revalidatePath("/settings");
+}
