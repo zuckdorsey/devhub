@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CalendarDays, MoreVertical, Pencil, Trash2, Github, Globe, ArrowUpRight } from "lucide-react";
+import { CalendarDays, MoreVertical, Pencil, Trash2, Github, Globe, ArrowUpRight, Clock } from "lucide-react";
 import { ProjectDialog } from "@/components/ProjectDialog";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import Link from "next/link";
@@ -77,11 +77,22 @@ export function ProjectCardActions({ project, tasks = [] }: ProjectCardActionsPr
                   <ArrowUpRight className="h-4 w-4 opacity-0 group-hover/title:opacity-100 transition-opacity" />
                 </CardTitle>
               </Link>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <CalendarDays className="h-3 w-3" />
-                {project.created_at
-                  ? new Date(project.created_at).toLocaleDateString('en-US', { dateStyle: 'medium' })
-                  : "Recently"}
+              <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                <div className="flex items-center gap-1">
+                  <CalendarDays className="h-3 w-3" />
+                  {project.created_at
+                    ? new Date(project.created_at).toLocaleDateString('en-US', { dateStyle: 'medium' })
+                    : "Recently"}
+                </div>
+                {project.end_date && (
+                  <div className={`flex items-center gap-1 ${new Date(project.end_date) < new Date() && project.status !== "Done"
+                      ? "text-red-500"
+                      : ""
+                    }`}>
+                    <Clock className="h-3 w-3" />
+                    Due: {new Date(project.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">

@@ -118,6 +118,7 @@ CREATE TABLE IF NOT EXISTS issues (
   priority VARCHAR(20) CHECK (priority IN ('Low', 'Medium', 'High', 'Critical')) DEFAULT 'Medium',
   project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
   labels TEXT[] DEFAULT ARRAY[]::TEXT[],
+  due_date TIMESTAMP WITH TIME ZONE,
   
   -- GitHub sync fields
   github_issue_number INTEGER,
@@ -126,4 +127,15 @@ CREATE TABLE IF NOT EXISTS issues (
   
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Task ↔ Branch links
+CREATE TABLE IF NOT EXISTS task_branch_links (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  repo_full_name TEXT NOT NULL,
+  branch_name TEXT NOT NULL,
+  source VARCHAR(20) NOT NULL DEFAULT 'manual' CHECK (source IN ('auto', 'manual')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (task_id, repo_full_name, branch_name)
 );
