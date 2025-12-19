@@ -276,3 +276,49 @@ export async function getBranches(repoUrl: string, limit = 100): Promise<GitHubB
     );
     return branches || [];
 }
+
+export interface GitHubTreeItem {
+    path: string;
+    mode: string;
+    type: "blob" | "tree";
+    sha: string;
+    size?: number;
+    url: string;
+}
+
+export async function getReadmeContent(repoUrl: string): Promise<string | null> {
+    const repoInfo = parseRepoUrl(repoUrl);
+    if (!repoInfo) return null;
+
+    // Try common README filenames
+    const filenames = ["README.md", "README.txt", "readme.md", "Readme.md"];
+
+    for (const filename of filenames) {
+        // Fetch raw content
+        const response = await fetchGitHub<{ content: string; encoding: string }>(
+            `/repos/${repoInfo.owner}/${repoInfo.repo}/contents/${filename}`
+        );
+
+        if (response && response.content && response.encoding === "base64") {
+            return Buffer.from(response.content, "base64").toString("utf-8");
+        }
+    }
+
+    return null;
+}
+
+export async function getRepoFileTree(repoUrl: string): Promise<GitHubTreeItem[]> {
+    const repoInfo = parseRepoUrl(repoUrl);
+    if (!repoInfo) return [];
+
+    // Get default branch ref first to get the tree SHA
+    const repo = await getRepoDetails(repoUrl);
+    if (!repo) return [];
+
+    // Fetch recursive tree
+    const treeData = await fetchGitHub<{ tree: GitHubTreeItem[], truncated: boolean }>(
+        `/repos/${repoInfo.owner}/${repoInfo.repo}/git/trees/${repo.default_branch}?recursive=1`
+    );
+
+    return treeData?.tree || [];
+}

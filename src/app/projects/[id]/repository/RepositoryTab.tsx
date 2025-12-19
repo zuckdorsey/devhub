@@ -4,7 +4,9 @@ import {
     getWorkflowRuns,
     getIssuesAndPRs,
     getCommits,
-    getContributors
+    getContributors,
+    getReadmeContent,
+    getRepoFileTree
 } from "@/lib/github";
 import { RepoStats } from "./RepoStats";
 import { LanguageChart } from "./LanguageChart";
@@ -18,6 +20,9 @@ import { getCommitRelationsForProject } from "@/lib/commitLinks";
 import { getProjectVersions } from "@/lib/projectVersions";
 import { CreateVersionDialog } from "./CreateVersionDialog";
 import { getSetting } from "@/lib/settings";
+import { ReadmeViewer } from "@/components/ReadmeViewer";
+import { FileTree } from "@/components/FileTree";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface RepositoryTabProps {
     repoUrl: string;
@@ -40,7 +45,7 @@ export async function RepositoryTab({ repoUrl, projectId }: RepositoryTabProps) 
     }
 
     // Fetch all other data in parallel
-    const [languages, workflows, issues, commits, contributors, versions, warnSetting] = await Promise.all([
+    const [languages, workflows, issues, commits, contributors, versions, warnSetting, readme, fileTree] = await Promise.all([
         getLanguages(repoUrl),
         getWorkflowRuns(repoUrl),
         getIssuesAndPRs(repoUrl),
@@ -48,6 +53,8 @@ export async function RepositoryTab({ repoUrl, projectId }: RepositoryTabProps) 
         getContributors(repoUrl),
         getProjectVersions(projectId),
         getSetting("automation_warn_commits_without_task_reference"),
+        getReadmeContent(repoUrl),
+        getRepoFileTree(repoUrl)
     ]);
 
     const commitRelations = await getCommitRelationsForProject(projectId, repoUrl, commits);
@@ -59,6 +66,19 @@ export async function RepositoryTab({ repoUrl, projectId }: RepositoryTabProps) 
 
             <div className="flex justify-end">
                 <CreateVersionDialog projectId={projectId} repoUrl={repoUrl} commits={commits} />
+            </div>
+
+            {/* Code & Content Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full items-start">
+                {/* Sidebar: File Tree */}
+                <div className="lg:col-span-1 min-h-[400px]">
+                    <FileTree tree={fileTree} repoUrl={repoUrl} />
+                </div>
+
+                {/* Main Content: README */}
+                <div className="lg:col-span-3">
+                    <ReadmeViewer content={readme} />
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
