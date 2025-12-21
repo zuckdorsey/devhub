@@ -51,7 +51,31 @@ export function ProjectSettings({ project, vercelProjects = [] }: ProjectSetting
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="description">Description</Label>
-                                <Input id="description" name="description" defaultValue={project.description} />
+                                <Input id="description" name="description" defaultValue={project.description || ""} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="github_repo">GitHub Repository</Label>
+                                <Input
+                                    id="github_repo"
+                                    name="github_repo"
+                                    defaultValue={project.github_repo || ""}
+                                    placeholder="https://github.com/username/repo"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Full URL to your GitHub repository.
+                                </p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="api_endpoint">Live Demo URL</Label>
+                                <Input
+                                    id="api_endpoint"
+                                    name="api_endpoint"
+                                    defaultValue={project.api_endpoint || ""}
+                                    placeholder="https://your-app.vercel.app"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    URL to the live demo or production site.
+                                </p>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="vercel_project_id">Vercel Project</Label>
@@ -73,7 +97,7 @@ export function ProjectSettings({ project, vercelProjects = [] }: ProjectSetting
                                     <Input
                                         id="vercel_project_id"
                                         name="vercel_project_id"
-                                        defaultValue={project.vercel_project_id}
+                                        defaultValue={project.vercel_project_id || ""}
                                         placeholder="prj_..."
                                     />
                                 )}
