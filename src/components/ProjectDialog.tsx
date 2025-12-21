@@ -297,7 +297,13 @@ export function ProjectDialog({
                     <Label>Status</Label>
                     <Select
                       value={form.watch("status")}
-                      onValueChange={(value) => form.setValue("status", value as any)}
+                      onValueChange={(value) => {
+                        const allowedStatuses = new Set(["Idea", "In Progress", "Done", "On Hold"]);
+                        if (!allowedStatuses.has(value)) {
+                          return;
+                        }
+                        form.setValue("status", value as "Idea" | "In Progress" | "Done" | "On Hold");
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -327,7 +333,13 @@ export function ProjectDialog({
                     <Label>Priority</Label>
                     <Select
                       value={form.watch("priority")}
-                      onValueChange={(value) => form.setValue("priority", value as any)}
+                      onValueChange={(value) => {
+                        const allowedPriorities = new Set(["Low", "Medium", "High", "Critical"]);
+                        if (!allowedPriorities.has(value)) {
+                          return;
+                        }
+                        form.setValue("priority", value as "Low" | "Medium" | "High" | "Critical");
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue />

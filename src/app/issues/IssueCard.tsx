@@ -31,7 +31,6 @@ import {
     Github,
     Cloud,
     CloudOff,
-    Pencil,
     Loader2,
     Calendar,
     AlertTriangle,
