@@ -140,13 +140,23 @@ export function NewIssueDialog({ projects }: NewIssueDialogProps) {
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="labels">Labels</Label>
-                        <Input
-                            id="labels"
-                            name="labels"
-                            placeholder="bug, feature, docs (comma-separated)"
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="labels">Labels</Label>
+                            <Input
+                                id="labels"
+                                name="labels"
+                                placeholder="bug, feature, docs"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="due_date">Due Date</Label>
+                            <Input
+                                id="due_date"
+                                name="due_date"
+                                type="date"
+                            />
+                        </div>
                     </div>
 
                     {selectedProjectHasRepo && (

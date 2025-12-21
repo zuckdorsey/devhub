@@ -32,8 +32,10 @@ import {
     Cloud,
     CloudOff,
     Loader2,
+    Calendar,
+    AlertTriangle,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format, isPast, isToday } from "date-fns";
 import { useRouter } from "next/navigation";
 
 interface IssueCardProps {
@@ -145,6 +147,23 @@ export function IssueCard({ issue }: IssueCardProps) {
                             >
                                 {issue.priority}
                             </Badge>
+                            {issue.due_date && (
+                                <>
+                                    <span>•</span>
+                                    <div className={`flex items-center gap-1 ${isPast(new Date(issue.due_date)) && issue.status === "open"
+                                            ? "text-red-500"
+                                            : isToday(new Date(issue.due_date))
+                                                ? "text-yellow-500"
+                                                : ""
+                                        }`}>
+                                        {isPast(new Date(issue.due_date)) && issue.status === "open" && (
+                                            <AlertTriangle className="h-3 w-3" />
+                                        )}
+                                        <Calendar className="h-3 w-3" />
+                                        <span>{format(new Date(issue.due_date), "MMM d")}</span>
+                                    </div>
+                                </>
+                            )}
                             {issue.labels && issue.labels.length > 0 && (
                                 <>
                                     <span>•</span>

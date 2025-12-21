@@ -170,13 +170,13 @@ export function TaskDialog({ open, onOpenChange, task, projects, sections = [], 
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="start_time">Start Time</Label>
+                                <Label htmlFor="due_date">Due Date</Label>
                                 <Input
-                                    id="start_time"
-                                    name="start_time"
-                                    type="datetime-local"
-                                    defaultValue={task?.start_time
-                                        ? new Date(task.start_time).toISOString().slice(0, 16)
+                                    id="due_date"
+                                    name="due_date"
+                                    type="date"
+                                    defaultValue={task?.due_date
+                                        ? new Date(task.due_date).toISOString().split("T")[0]
                                         : ""}
                                 />
                             </div>
@@ -228,18 +228,6 @@ export function TaskDialog({ open, onOpenChange, task, projects, sections = [], 
                                     </SelectContent>
                                 </Select>
                             </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="due_date">Deadline</Label>
-                            <Input
-                                id="due_date"
-                                name="due_date"
-                                type="datetime-local"
-                                defaultValue={task?.due_date
-                                    ? new Date(task.due_date).toISOString().slice(0, 16)
-                                    : ""}
-                            />
                         </div>
 
                         {/* Subtasks Section */}

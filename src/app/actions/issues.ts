@@ -29,6 +29,7 @@ export async function createIssueAction(formData: FormData) {
     const priorityInput = (formData.get("priority") as string) || "Medium";
     const project_id = formData.get("project_id") as string;
     const labelsStr = formData.get("labels") as string;
+    const due_date = formData.get("due_date") as string;
     const syncToGitHub = formData.get("sync_to_github") === "true";
 
     const labels = labelsStr
@@ -76,6 +77,7 @@ export async function createIssueAction(formData: FormData) {
         priority,
         project_id: project_id || undefined,
         labels,
+        due_date: due_date || undefined,
         github_issue_number,
         github_issue_url,
     });
@@ -95,6 +97,7 @@ export async function updateIssueAction(id: string, formData: FormData) {
     const priorityInput = formData.get("priority") as string;
     const project_id = formData.get("project_id") as string;
     const labelsStr = formData.get("labels") as string;
+    const due_date = formData.get("due_date") as string;
 
     const labels = labelsStr
         ? labelsStr.split(",").map((l) => l.trim()).filter(Boolean)
@@ -113,6 +116,7 @@ export async function updateIssueAction(id: string, formData: FormData) {
         priority,
         project_id: project_id || undefined,
         labels,
+        due_date: due_date || undefined,
     });
 
     revalidatePath("/issues");

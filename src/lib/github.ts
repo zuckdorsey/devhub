@@ -66,11 +66,7 @@ export interface GitHubIssue {
         login: string;
         avatar_url: string;
     };
-    labels?: Array<{
-        id: number;
-        name: string;
-        color: string;
-    }>;
+    labels?: Array<{ name: string }>;
     pull_request?: {
         url: string;
     };

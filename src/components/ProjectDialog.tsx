@@ -387,23 +387,13 @@ export function ProjectDialog({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="start_date">Start Date</Label>
-                    <Input
-                      id="start_date"
-                      type="date"
-                      {...form.register("start_date")}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="end_date">End Date</Label>
-                    <Input
-                      id="end_date"
-                      type="date"
-                      {...form.register("end_date")}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="end_date">Due Date</Label>
+                  <Input
+                    id="end_date"
+                    type="date"
+                    {...form.register("end_date")}
+                  />
                 </div>
               </TabsContent>
 
