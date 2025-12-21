@@ -14,7 +14,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Plus, Filter, Search, CheckCircle2, Clock, AlertCircle, ListTodo } from "lucide-react";
+import { Plus, Filter, Search, CheckCircle2, Clock, AlertCircle, ListTodo, Sparkles } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -24,6 +24,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TaskDialog } from "@/components/TaskDialog";
+import { TaskGeneratorDialog } from "@/components/TaskGeneratorDialog";
 import { Badge } from "@/components/ui/badge";
 
 import { Section } from "@/lib/sections";
@@ -40,7 +41,9 @@ export function TasksClient({ initialTasks, projects, sections }: TasksClientPro
     const [view, setView] = useState<"board" | "table">("board");
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedProject, setSelectedProject] = useState<string>("all");
+
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isGeneratorOpen, setIsGeneratorOpen] = useState(false);
 
     const filteredTasks = initialTasks.filter((task) => {
         if (selectedProject !== "all" && task.project_id !== selectedProject) return false;
@@ -108,10 +111,16 @@ export function TasksClient({ initialTasks, projects, sections }: TasksClientPro
                         Manage your tasks with clear start times and deadlines.
                     </p>
                 </div>
-                <Button onClick={() => setIsDialogOpen(true)} className="gap-2 shadow-lg shadow-primary/20">
-                    <Plus className="h-4 w-4" />
-                    Add Task
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={() => setIsGeneratorOpen(true)} className="gap-2 border-indigo-200 hover:border-indigo-300 hover:bg-indigo-50 text-indigo-600 dark:border-indigo-800 dark:hover:bg-indigo-950 dark:text-indigo-400">
+                        <Sparkles className="h-4 w-4" />
+                        Generate with AI
+                    </Button>
+                    <Button onClick={() => setIsDialogOpen(true)} className="gap-2 shadow-lg shadow-primary/20">
+                        <Plus className="h-4 w-4" />
+                        Add Task
+                    </Button>
+                </div>
             </div>
 
             {/* Stats */}
@@ -178,6 +187,14 @@ export function TasksClient({ initialTasks, projects, sections }: TasksClientPro
                 projects={projects}
                 sections={sections}
             />
-        </div>
+
+            <TaskGeneratorDialog
+                open={isGeneratorOpen}
+                onOpenChange={setIsGeneratorOpen}
+                projectId={selectedProject !== "all" ? selectedProject : undefined}
+                projects={projects}
+                sections={sections}
+            />
+        </div >
     );
 }
