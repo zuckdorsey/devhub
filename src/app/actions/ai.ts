@@ -17,7 +17,7 @@ Return a JSON array of tasks with the following schema:
 [
     {
         "title": "Task Title",
-        "description": "Markdow description of task",
+        "description": "Markdown description of task",
         "priority": "Low" | "Medium" | "High",
         "estimated_minutes": number (optional)
     }
@@ -37,14 +37,21 @@ async function generateWithGemini(apiKey: string, prompt: string): Promise<Gener
 }
 
 async function generateWithOpenRouter(apiKey: string, model: string, prompt: string): Promise<GeneratedTask[]> {
+    const referer = process.env.OPENROUTER_SITE_URL;
+
+    const headers: HeadersInit = {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "X-Title": "DevHub" // Optional: Report app name
+    };
+
+    if (referer) {
+        (headers as Record<string, string>)["HTTP-Referer"] = referer; // Optional: Report site URL
+    }
+
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
-        headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://devhub.local", // Optional: Report site URL
-            "X-Title": "DevHub" // Optional: Report app name
-        },
+        headers,
         body: JSON.stringify({
             model: model,
             messages: [
@@ -88,14 +95,25 @@ function parseAIResponse(text: string): GeneratedTask[] {
         }
 
         return tasks as GeneratedTask[];
-    } catch (e) {
+    } catch {
+        // Log full response to server console for debugging
         console.error("Failed to parse AI response:", text);
+        // Provide truncated version to user
         const snippet = text.slice(0, 200).replace(/\n/g, " ");
         throw new Error(`AI returned invalid data format. Response snippet: ${snippet}`);
     }
 }
 
 export async function generateTasksAction(prompt: string): Promise<GeneratedTask[]> {
+    // Validate prompt
+    const trimmedPrompt = prompt.trim();
+    if (!trimmedPrompt) {
+        throw new Error("Prompt cannot be empty");
+    }
+    if (trimmedPrompt.length > 5000) {
+        throw new Error("Prompt is too long. Please keep it under 5000 characters.");
+    }
+
     const provider = await getSetting("ai_provider") || "gemini";
 
     if (provider === "openrouter") {

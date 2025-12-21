@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { saveAISettings } from "@/app/actions/settings";
 import { useState } from "react";
-import { Loader2, CheckCircle2, Sparkles, Key, Bot, Cpu } from "lucide-react";
+import { Loader2, Sparkles, Key, Bot, Cpu } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

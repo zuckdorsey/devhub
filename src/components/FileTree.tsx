@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface FileTreeProps {
     tree: GitHubTreeItem[];
     repoUrl: string; // Used for linking to files
+    defaultBranch?: string; // Default branch name (e.g., "main", "master")
 }
 
 type TreeNode = {
@@ -25,13 +26,8 @@ function buildTree(items: GitHubTreeItem[]): TreeNode[] {
     const root: TreeNode[] = [];
     const map = new Map<string, TreeNode>();
 
-    // Sort items so folders come first, then files, alphabetically
-    const sortedItems = [...items].sort((a, b) => {
-        if (a.type !== b.type) return a.type === "tree" ? -1 : 1;
-        return a.path.localeCompare(b.path);
-    });
-
-    sortedItems.forEach(item => {
+    // Build tree structure first
+    items.forEach(item => {
         const parts = item.path.split("/");
         const name = parts.pop()!;
         const parentPath = parts.join("/");
@@ -56,6 +52,18 @@ function buildTree(items: GitHubTreeItem[]): TreeNode[] {
         }
     });
 
+    // Sort only at the root level and recursively for children
+    const sortNodes = (nodes: TreeNode[]) => {
+        nodes.sort((a, b) => {
+            if (a.type !== b.type) return a.type === "tree" ? -1 : 1;
+            return a.name.localeCompare(b.name);
+        });
+        nodes.forEach(node => {
+            if (node.children) sortNodes(node.children);
+        });
+    };
+
+    sortNodes(root);
     return root;
 }
 
@@ -82,21 +90,21 @@ const getFileIcon = (filename: string) => {
     }
 };
 
-const TreeNodeItem = ({ node, level, repoUrl }: { node: TreeNode; level: number; repoUrl: string }) => {
+const TreeNodeItem = ({ node, level, repoUrl, defaultBranch = "main" }: { node: TreeNode; level: number; repoUrl: string; defaultBranch?: string }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const hasChildren = node.children && node.children.length > 0;
 
-    // Construct GitHub view URL
-    // repoUrl is like https://github.com/owner/repo
-    // File view: https://github.com/owner/repo/blob/main/path/to/file
-    // Tree view: https://github.com/owner/repo/tree/main/path/to/folder
-    // We'll assume 'main' or 'master' (not ideal but quick link) or dynamic if we passed defaultBranch
-    // For now, simpler to just assume main or not link yet?
-    // Let's use repoUrl + /blob/main/ + path for files
-    const fileLink = `${repoUrl}/blob/main/${node.path}`;
+    // Construct GitHub view URL using the default branch
+    const fileLink = `${repoUrl}/blob/${defaultBranch}/${node.path}`;
 
     const handleToggle = () => {
         if (node.type === "tree") {
+            setIsOpen(!isOpen);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (node.type === "tree" && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
             setIsOpen(!isOpen);
         }
     };
@@ -109,6 +117,10 @@ const TreeNodeItem = ({ node, level, repoUrl }: { node: TreeNode; level: number;
                     level > 0 && "ml-4"
                 )}
                 onClick={handleToggle}
+                onKeyDown={handleKeyDown}
+                role={node.type === "tree" ? "button" : undefined}
+                tabIndex={node.type === "tree" ? 0 : undefined}
+                aria-expanded={node.type === "tree" ? isOpen : undefined}
             >
                 {node.type === "tree" && (
                     <span className="text-muted-foreground/60 mr-0.5">
@@ -134,7 +146,7 @@ const TreeNodeItem = ({ node, level, repoUrl }: { node: TreeNode; level: number;
             {isOpen && node.children && (
                 <div className="border-l border-border/40 ml-[1.125rem] pl-1">
                     {node.children.map(child => (
-                        <TreeNodeItem key={child.path} node={child} level={level + 1} repoUrl={repoUrl} />
+                        <TreeNodeItem key={child.path} node={child} level={level + 1} repoUrl={repoUrl} defaultBranch={defaultBranch} />
                     ))}
                 </div>
             )}
@@ -142,7 +154,7 @@ const TreeNodeItem = ({ node, level, repoUrl }: { node: TreeNode; level: number;
     );
 };
 
-export function FileTree({ tree, repoUrl }: FileTreeProps) {
+export function FileTree({ tree, repoUrl, defaultBranch = "main" }: FileTreeProps) {
     const rootNodes = buildTree(tree);
 
     return (
@@ -157,7 +169,7 @@ export function FileTree({ tree, repoUrl }: FileTreeProps) {
                 <ScrollArea className="h-full pr-4">
                     <div className="space-y-0.5">
                         {rootNodes.map(node => (
-                            <TreeNodeItem key={node.path} node={node} level={0} repoUrl={repoUrl} />
+                            <TreeNodeItem key={node.path} node={node} level={0} repoUrl={repoUrl} defaultBranch={defaultBranch} />
                         ))}
                     </div>
                 </ScrollArea>

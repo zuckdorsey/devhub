@@ -8,7 +8,7 @@ Built for modern developers, DevHub goes beyond simple to-do lists by integratin
 
 ## ✨ Key Features
 
-### � Core Management
+### 📦 Core Management
 - **Smart Project Dashboard**: Track status, tech stacks, priorities, and version release history.
 - **Kanban Task Board**: Drag-and-drop interface with priority labeling and "Instant Actions" for subtasks.
 - **Detailed Issue Tracking**: Local issue management with 2-way GitHub synchronization, including labels and due dates.

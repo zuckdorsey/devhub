@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Loader2, Sparkles, Plus, AlertCircle, Wand2, Check, X } from "lucide-react";
+import { Loader2, Sparkles, Plus, AlertCircle, Check, X } from "lucide-react";
 import { generateTasksAction, GeneratedTask } from "@/app/actions/ai";
 import { createTaskAction } from "@/app/actions/tasks";
 import { createSectionAction } from "@/app/actions/sections";
@@ -92,8 +92,14 @@ export function TaskGeneratorDialog({
             setGeneratedTasks(tasks);
             // Auto-select all by default
             setSelectedIndices(tasks.map((_, i) => i));
-        } catch (err: any) {
-            setError(err.message || "Failed to generate tasks");
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message || "Failed to generate tasks");
+            } else if (typeof err === "string") {
+                setError(err || "Failed to generate tasks");
+            } else {
+                setError("Failed to generate tasks");
+            }
         } finally {
             setIsGenerating(false);
         }
@@ -124,13 +130,19 @@ export function TaskGeneratorDialog({
             formData.append("project_id", targetProjectId);
             formData.append("name", newSectionName);
 
-            await createSectionAction(formData);
+            const result = await createSectionAction(formData);
+
+            // Update local sections list with the new section
+            if (result && typeof result === 'object' && 'id' in result) {
+                setLocalSections(prev => [...prev, result as Section]);
+                setTargetSectionId(result.id);
+            }
 
             toast.success("Section created");
             setNewSectionName("");
             setIsCreatingSection(false);
 
-        } catch (err) {
+        } catch {
             toast.error("Failed to create section");
         } finally {
             setIsSavingSection(false);
@@ -167,7 +179,7 @@ export function TaskGeneratorDialog({
             setPrompt("");
             setGeneratedTasks([]);
             setSelectedIndices([]);
-        } catch (err) {
+        } catch {
             toast.error("Failed to save tasks");
         } finally {
             setIsSavingTasks(false);
@@ -180,7 +192,7 @@ export function TaskGeneratorDialog({
                 <DialogHeader>
                     <DialogTitle>Generate Tasks with AI</DialogTitle>
                     <DialogDescription>
-                        Describe your goal or project, and we'll break it down into actionable tasks.
+                        Describe your goal or project, and we&apos;ll break it down into actionable tasks.
                     </DialogDescription>
                 </DialogHeader>
 
