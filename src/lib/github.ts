@@ -58,6 +58,7 @@ export interface GitHubIssue {
     id: number;
     number: number;
     title: string;
+    body?: string;
     state: "open" | "closed";
     html_url: string;
     created_at: string;
@@ -65,6 +66,11 @@ export interface GitHubIssue {
         login: string;
         avatar_url: string;
     };
+    labels?: Array<{
+        id: number;
+        name: string;
+        color: string;
+    }>;
     pull_request?: {
         url: string;
     };
