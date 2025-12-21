@@ -72,7 +72,7 @@ export async function RepositoryTab({ repoUrl, projectId }: RepositoryTabProps) 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full items-start">
                 {/* Sidebar: File Tree */}
                 <div className="lg:col-span-1 min-h-[400px]">
-                    <FileTree tree={fileTree} repoUrl={repoUrl} />
+                    <FileTree tree={fileTree} repoUrl={repoUrl} defaultBranch={repo.default_branch} />
                 </div>
 
                 {/* Main Content: README */}

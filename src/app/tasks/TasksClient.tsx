@@ -14,7 +14,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Plus, Filter, Search, CheckCircle2, Clock, AlertCircle, ListTodo, Sparkles } from "lucide-react";
+import { Plus, Search, CheckCircle2, Clock, AlertCircle, ListTodo, Sparkles } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -114,7 +114,7 @@ export function TasksClient({ initialTasks, projects, sections }: TasksClientPro
                 <div className="flex items-center gap-2">
                     <Button variant="outline" onClick={() => setIsGeneratorOpen(true)} className="gap-2 border-indigo-200 hover:border-indigo-300 hover:bg-indigo-50 text-indigo-600 dark:border-indigo-800 dark:hover:bg-indigo-950 dark:text-indigo-400">
                         <Sparkles className="h-4 w-4" />
-                        Generate with AI
+                        Generate Tasks with AI
                     </Button>
                     <Button onClick={() => setIsDialogOpen(true)} className="gap-2 shadow-lg shadow-primary/20">
                         <Plus className="h-4 w-4" />
@@ -195,6 +195,6 @@ export function TasksClient({ initialTasks, projects, sections }: TasksClientPro
                 projects={projects}
                 sections={sections}
             />
-        </div >
+        </div>
     );
 }

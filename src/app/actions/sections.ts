@@ -11,7 +11,7 @@ export async function createSectionAction(formData: FormData) {
         throw new Error("Missing required fields");
     }
 
-    await createSection({
+    const section = await createSection({
         project_id,
         name,
     });
@@ -21,6 +21,8 @@ export async function createSectionAction(formData: FormData) {
     } catch (error) {
         console.warn("revalidatePath failed (expected in test script):", error);
     }
+
+    return section;
 }
 
 export async function updateSectionAction(id: string, projectId: string, formData: FormData) {

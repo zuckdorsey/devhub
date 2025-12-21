@@ -50,7 +50,7 @@ export function ReadmeViewer({ content }: ReadmeViewerProps) {
                 <article className="prose prose-neutral dark:prose-invert max-w-none prose-pre:p-0 prose-pre:bg-transparent">
                     <ReactMarkdown
                         components={{
-                            code({ node, inline, className, children, ...props }: any) {
+                            code({ inline, className, children, ...props }: any) {
                                 const match = /language-(\w+)/.exec(className || "");
                                 return !inline && match ? (
                                     <div className="rounded-md overflow-hidden bg-[#282c34] my-4 shadow-sm">
@@ -78,15 +78,22 @@ export function ReadmeViewer({ content }: ReadmeViewerProps) {
                                     </code>
                                 );
                             },
-                            img: ({ node, ...props }) => (
-                                <img {...props} className="rounded-lg border shadow-sm max-w-full" alt={props.alt || "Readme Image"} />
-                            ),
-                            a: ({ node, ...props }) => (
+                            img: ({ alt, ...props }) => {
+                                const safeAlt = typeof alt === "string" && alt.trim().length > 0 ? alt : "Readme Image";
+                                return (
+                                    <img
+                                        {...props}
+                                        className="rounded-lg border shadow-sm max-w-full"
+                                        alt={safeAlt}
+                                    />
+                                );
+                            },
+                            a: ({ ...props }) => (
                                 <a {...props} className="text-primary hover:underline font-medium" target="_blank" rel="noopener noreferrer" />
                             ),
-                            h1: ({ node, ...props }) => <h1 {...props} className="text-3xl font-bold mt-8 mb-4 border-b pb-2" />,
-                            h2: ({ node, ...props }) => <h2 {...props} className="text-2xl font-bold mt-8 mb-4" />,
-                            blockquote: ({ node, ...props }) => (
+                            h1: ({ ...props }) => <h1 {...props} className="text-3xl font-bold mt-8 mb-4 border-b pb-2" />,
+                            h2: ({ ...props }) => <h2 {...props} className="text-2xl font-bold mt-8 mb-4" />,
+                            blockquote: ({ ...props }) => (
                                 <blockquote {...props} className="border-l-4 border-primary/50 pl-4 py-1 italic bg-muted/20 rounded-r-md" />
                             ),
                         }}

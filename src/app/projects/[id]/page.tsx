@@ -123,11 +123,17 @@ export default async function ProjectPage({ params }: ProjectDetailsPageProps) {
 
             {/* Hero Section */}
             <div className="relative mb-10 rounded-3xl overflow-hidden border bg-card/40 shadow-2xl backdrop-blur-xl">
-                {/* Dynamic Gradient Background */}
-                <div className={`absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] ${project.status === 'In Progress' ? 'from-blue-500 via-indigo-500 to-transparent' :
+                {/* Dynamic Gradient Background - increased opacity and added border for better visibility */}
+                <div className={`absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] ${project.status === 'In Progress' ? 'from-blue-500 via-indigo-500 to-transparent' :
                         project.status === 'Done' ? 'from-emerald-500 via-teal-500 to-transparent' :
                             project.status === 'Idea' ? 'from-amber-500 via-orange-500 to-transparent' :
                                 'from-gray-500 via-slate-500 to-transparent'
+                    }`} />
+                {/* Additional visual indicator with border accent */}
+                <div className={`absolute top-0 left-0 right-0 h-1 ${project.status === 'In Progress' ? 'bg-gradient-to-r from-blue-500 to-indigo-500' :
+                        project.status === 'Done' ? 'bg-gradient-to-r from-emerald-500 to-teal-500' :
+                            project.status === 'Idea' ? 'bg-gradient-to-r from-amber-500 to-orange-500' :
+                                'bg-gradient-to-r from-gray-500 to-slate-500'
                     }`} />
 
                 <div className="relative p-8 md:p-10">

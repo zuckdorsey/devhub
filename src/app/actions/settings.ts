@@ -88,13 +88,13 @@ export async function saveAISettings(formData: FormData) {
     await saveSetting("ai_provider", provider);
 
     if (provider === "gemini") {
-        const key = formData.get("gemini_api_key") as string;
-        if (key) await saveSetting("gemini_api_key", key);
+        const key = formData.get("gemini_api_key");
+        if (key !== null) await saveSetting("gemini_api_key", String(key));
     } else if (provider === "openrouter") {
-        const key = formData.get("openrouter_api_key") as string;
-        const model = formData.get("openrouter_model") as string;
-        if (key) await saveSetting("openrouter_api_key", key);
-        if (model) await saveSetting("openrouter_model", model);
+        const key = formData.get("openrouter_api_key");
+        const model = formData.get("openrouter_model");
+        if (key !== null) await saveSetting("openrouter_api_key", String(key));
+        if (model !== null) await saveSetting("openrouter_model", String(model));
     }
 
     revalidatePath("/settings");
