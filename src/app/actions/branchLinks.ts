@@ -54,20 +54,11 @@ export async function linkTaskToBranchAction(formData: FormData) {
 
 export async function unlinkTaskFromBranchAction(
   taskId: string,
+  repoFullName: string,
   branchName: string
 ) {
   const task = await getTaskById(taskId);
   if (!task || !task.project_id) {
-    return;
-  }
-
-  const project = await getProjectById(task.project_id);
-  if (!project || !project.github_repo) {
-    return;
-  }
-
-  const repoFullName = getRepoFullNameFromUrl(project.github_repo);
-  if (!repoFullName) {
     return;
   }
 

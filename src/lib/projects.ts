@@ -112,22 +112,22 @@ export async function updateProject(
     const [project] = await sql`
       UPDATE projects
       SET 
-        name = COALESCE(${data.name || null}, name),
-        status = COALESCE(${data.status || null}, status),
-        tech_stack = COALESCE(${data.tech_stack || null}, tech_stack),
-        description = COALESCE(${data.description || null}, description),
-        api_endpoint = COALESCE(${data.api_endpoint || null}, api_endpoint),
-        github_repo = COALESCE(${data.github_repo || null}, github_repo),
-        priority = COALESCE(${data.priority || null}, priority),
-        progress = COALESCE(${data.progress !== undefined ? data.progress : null}, progress),
-        related_issues = COALESCE(${data.related_issues || null}, related_issues),
-        related_tasks = COALESCE(${data.related_tasks || null}, related_tasks),
-        tags = COALESCE(${data.tags || null}, tags),
-        start_date = COALESCE(${data.start_date || null}, start_date),
-        end_date = COALESCE(${data.end_date || null}, end_date),
-        image_url = COALESCE(${data.image_url || null}, image_url),
-        documentation_links = COALESCE(${data.documentation_links || null}, documentation_links),
-        vercel_project_id = COALESCE(${data.vercel_project_id || null}, vercel_project_id)
+        name = ${data.name !== undefined ? data.name : sql`name`},
+        status = ${data.status !== undefined ? data.status : sql`status`},
+        tech_stack = ${data.tech_stack !== undefined ? data.tech_stack : sql`tech_stack`},
+        description = ${data.description !== undefined ? data.description : sql`description`},
+        api_endpoint = ${data.api_endpoint !== undefined ? data.api_endpoint : sql`api_endpoint`},
+        github_repo = ${data.github_repo !== undefined ? data.github_repo : sql`github_repo`},
+        priority = ${data.priority !== undefined ? data.priority : sql`priority`},
+        progress = ${data.progress !== undefined ? data.progress : sql`progress`},
+        related_issues = ${data.related_issues !== undefined ? data.related_issues : sql`related_issues`},
+        related_tasks = ${data.related_tasks !== undefined ? data.related_tasks : sql`related_tasks`},
+        tags = ${data.tags !== undefined ? data.tags : sql`tags`},
+        start_date = ${data.start_date !== undefined ? data.start_date : sql`start_date`},
+        end_date = ${data.end_date !== undefined ? data.end_date : sql`end_date`},
+        image_url = ${data.image_url !== undefined ? data.image_url : sql`image_url`},
+        documentation_links = ${data.documentation_links !== undefined ? data.documentation_links : sql`documentation_links`},
+        vercel_project_id = ${data.vercel_project_id !== undefined ? data.vercel_project_id : sql`vercel_project_id`}
       WHERE id = ${id}
       RETURNING *
     `;
